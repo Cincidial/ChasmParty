@@ -26,6 +26,7 @@ async function getBuildData() {
 
         Promise.all([data_promise, sprite_atlas_promise]).then(() => {
             loadingSplash.removeFromDom()
+            getPokemonFrontImg('CHARMANDER').addToDom()
         }).catch((err) => console.log(`Data load error: ${err}`))
     } catch (error) {
         console.error(error.message)
