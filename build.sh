@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # To be run from root
-# Cleans related docs files and compiles the new ones for serving
+# Compiles new docs files for serving
 
 html_index_file_content=$(cat src/index.html)
 for file in src/templates/*.html; do
