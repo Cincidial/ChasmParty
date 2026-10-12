@@ -1,9 +1,17 @@
+class AtlasImg extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, "atlas-img-template")
+    }
+}
+customElements.define("atlas-img", AtlasImg)
+
 function getAtlasImg(x, y, w, h, filename) {
-    const template = new Template('atlas-img-template')
-    const img = template.node.getElementById('img')
+    const atlasImg = new AtlasImg()
+    const img = atlasImg.getElementById("img")
     img.style = `width: ${w}px; height: ${h}px; background-image: url('${filename}'); background-position: -${x}px -${y}px;`
 
-    return template
+    return atlasImg
 }
 
 function getPokemonIconImg(id) {

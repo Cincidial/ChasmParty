@@ -1,13 +1,10 @@
-// Named with '_' so that it's always the first file compiled
-
 document.addEventListener('DOMContentLoaded', () => getBuildData())
 
 var compiled_data
 var sprite_atlas_img
 
 async function getBuildData() {
-    const loadingSplash = getLoadingSplash()
-    loadingSplash.addToDom()
+    const loadingSplash = document.getElementById('loadingSplash')
 
     async function handleData() {
         const response = await fetch('data.json')
@@ -25,8 +22,8 @@ async function getBuildData() {
         })
 
         Promise.all([data_promise, sprite_atlas_promise]).then(() => {
-            loadingSplash.removeFromDom()
-            getPokemonFrontImg('CHARMANDER').addToDom()
+            loadingSplash.remove()
+            document.body.appendChild(new DexPage())
         }).catch((err) => console.log(`Data load error: ${err}`))
     } catch (error) {
         console.error(error.message)

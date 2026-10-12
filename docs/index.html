@@ -7,17 +7,10 @@
         <link rel="icon" type="favicon" href="icon.png" />
         <script defer src="src.js"></script>
     </head>
-    <body></body>
+    <body>
+        <loading-splash id="loadingSplash"></loading-splash>
+    </body>
 
-<template id="atlas-img-template">
-    <style>
-        .div_image {
-            background-repeat: no-repeat;
-            overflow: hidden;
-        }
-    </style>
-    <div id="img" class="div_image"></div>
-</template>
 <template id="loading-splash-template">
     <style>
         .spinner {
@@ -53,5 +46,25 @@
         <div class="spinner"></div>
         <div>Loading Data and Images!</div>
     </div>
+</template>
+<template id="dex-page-template">
+    <style></style>
+    <drop-down id="test" placeholder="placeholder"></drop-down>
+</template>
+
+<template id="dropdown-template">
+    <style></style>
+    <datalist id="data"></datalist>
+    <input id="list" list="data" />
+</template>
+
+<template id="atlas-img-template">
+    <style>
+        .div_image {
+            background-repeat: no-repeat;
+            overflow: hidden;
+        }
+    </style>
+    <div id="img" class="div_image"></div>
 </template>
 </html>
