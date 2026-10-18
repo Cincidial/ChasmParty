@@ -1,10 +1,10 @@
 class AtlasImg extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "atlas-img-template")
+        setupElement(this, "party-atlas-img-template")
     }
 }
-customElements.define("atlas-img", AtlasImg)
+customElements.define("party-atlas-img", AtlasImg)
 
 function getAtlasImg(x, y, w, h, filename) {
     const atlasImg = new AtlasImg()

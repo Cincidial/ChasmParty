@@ -1,10 +1,10 @@
 class LoadingSplash extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "loading-splash-template")
+        setupElement(this, "party-loading-splash-template")
     }
 }
-customElements.define("loading-splash", LoadingSplash)
+customElements.define("party-loading-splash", LoadingSplash)
 
 function setupElement(element, templateId) {
     const template = document.getElementById(templateId).content
@@ -18,10 +18,10 @@ function setupElement(element, templateId) {
 class AtlasImg extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "atlas-img-template")
+        setupElement(this, "party-atlas-img-template")
     }
 }
-customElements.define("atlas-img", AtlasImg)
+customElements.define("party-atlas-img", AtlasImg)
 
 function getAtlasImg(x, y, w, h, filename) {
     const atlasImg = new AtlasImg()
@@ -48,49 +48,82 @@ function getPokemonFrontImg(id) {
 class DexPage extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "dex-page-template")
+        setupElement(this, 'party-dex-page-template')
 
-        this.test = this.getElementById("test")
-        this.test.populate(["a", "b", "c"])
-        this.test.onSelect((value) => console.log(value))
+        this.test = this.getElementById('test')
+        this.test.populate(['a', 'b', 'c'])
+        this.test.onSelect = (value) => console.log(value)
+
+        this.filterOptions = [
+            this.getElementById('filterOptionPokemon'),
+            this.getElementById('filterOptionAbility'),
+            this.getElementById('filterOptionMove'),
+        ]
+        this.filterOptions.forEach((opt) => {
+            opt.onclick = (key) => console.log(key)
+        })
     }
 }
-customElements.define("dex-page", DexPage)
+customElements.define('party-dex-page', DexPage)
 
-class Dropdown extends HTMLElement {
+class HeaderOption extends HTMLElement {
     static get observedAttributes() {
-        return ["placeholder"]
+        return ['key']
     }
 
     constructor() {
         super()
-        setupElement(this, "dropdown-template")
+        setupElement(this, 'party-header-option-template')
 
-        this.datalist = this.getElementById("data")
-        this.list = this.getElementById("list")
+        this.header = this.getElementById('header')
+    }
+
+    set onclick(func) {
+        this.header.onclick = () => func(this.key)
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-        if (name === "placeholder" && oldValue != newValue) {
-            this.list.setAttribute("placeholder", newValue || "")
+        if (name === 'key') {
+            this.key = newValue
+        }
+    }
+}
+customElements.define('party-header-option', HeaderOption)
+
+class Dropdown extends HTMLElement {
+    static get observedAttributes() {
+        return ['placeholder']
+    }
+
+    constructor() {
+        super()
+        setupElement(this, 'party-dropdown-template')
+
+        this.datalist = this.getElementById('data')
+        this.list = this.getElementById('list')
+    }
+
+    set onSelect(func) {
+        this.list.addEventListener('input', (e) => func(e.target.value))
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'placeholder') {
+            this.list.setAttribute('placeholder', newValue || '')
         }
     }
 
     populate(options) {
         this.datalist.replaceChildren(
             ...options.map((option) => {
-                var element = document.createElement("option")
+                var element = document.createElement('option')
                 element.value = option
                 return element
             }),
         )
     }
-
-    onSelect(func) {
-        this.list.addEventListener("input", (e) => func(e.target.value))
-    }
 }
-customElements.define("drop-down", Dropdown)
+customElements.define('party-drop-down', Dropdown)
 
 document.addEventListener('DOMContentLoaded', () => getBuildData())
 

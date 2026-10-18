@@ -1,7 +1,7 @@
 class LoadingSplash extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "loading-splash-template")
+        setupElement(this, "party-loading-splash-template")
     }
 }
-customElements.define("loading-splash", LoadingSplash)
+customElements.define("party-loading-splash", LoadingSplash)
