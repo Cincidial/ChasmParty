@@ -1,23 +1,30 @@
 <template id="party-dex-page-template">
     <style>
         .card {
-            background: var(--card-bg, #ffffff);
-            border: var(--card-border, 1px solid #e0e0e0);
-            border-radius: var(--card-radius, 8px);
-            box-shadow: var(--card-shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06));
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 3px 3px 5px #00000022;
             padding: 3px;
+        }
+
+        .filteredList {
+            display: flex;
+            flex-wrap: wrap;
+            overflow: scroll;
+            padding: 5px;
         }
     </style>
     <h1 style="text-align: center">Pokédex</h1>
     <div class="card" style="width: 300px">
         <div>
-            <party-header-option id="filterOptionPokemon" key="pokemon">Pokémon</party-header-option>
-            <party-header-option id="filterOptionAbility" key="ability">Ability</party-header-option>
-            <party-header-option id="filterOptionMove" key="move">Move</party-header-option>
+            <party-filter-option id="filter_option_pokemon" key="pokemon">Pokémon</party-filter-option>
+            <party-filter-option id="filter_option_ability" key="ability">Ability</party-filter-option>
+            <party-filter-option id="filter_option_move" key="move">Move</party-filter-option>
+            <span id="add_filter_button">Add Filter</span>
         </div>
+        <div id="filter_form"></div>
     </div>
-    <party-drop-down id="test" placeholder="placeholder"></party-drop-down>
+    <div id="applied_filters_list" class="card"></div>
+    <div id="pokemon_list" class="filteredList"></div>
 </template>

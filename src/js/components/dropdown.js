@@ -15,9 +15,9 @@ class Dropdown extends HTMLElement {
         this.list.addEventListener('input', (e) => func(e.target.value))
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback(name, _, new_value) {
         if (name === 'placeholder') {
-            this.list.setAttribute('placeholder', newValue || '')
+            this.list.setAttribute('placeholder', new_value || '')
         }
     }
 

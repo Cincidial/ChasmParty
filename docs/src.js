@@ -1,3 +1,73 @@
+class PokemonFilterForm extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-pokemon-filter-form-template')
+
+        this.generation_select = this.getElementById('generation_select')
+        this.generation_select.replaceChildren(
+            ...['Any', ...cached_data.generations].map((gen) => {
+                var element = document.createElement('option')
+                element.value = gen
+                element.innerHTML = gen
+                return element
+            }),
+        )
+
+        this.evolution_select = this.getElementById('evolution_select')
+        this.hide_legendary_checkbox = this.getElementById('hide_legendary_checkbox')
+    }
+
+    set onChange(func) {
+        this.generation_select.onchange = func
+        this.evolution_select.onchange = func
+        this.hide_legendary_checkbox.onchange = func
+    }
+
+    clear() {
+        this.generation_select.value = 'Any'
+        this.evolution_select.value = 'Any'
+        this.hide_legendary_checkbox.checked = false
+    }
+
+    getFilters() {
+        const filters = []
+        if (this.generation_select.value != 'Any') {
+            filters.push(
+                new FilterConfig(
+                    DexPage.POKEMON_GENERATION_FILTER_ID,
+                    DexPage.FILTER_GROUP_POKEMON,
+                    this.generation_select.value,
+                ).setMonFunc((gen_key, gen_value, filter_values) => filter_values.includes(`${gen_value.Generation ?? -1}`)),
+            )
+        }
+
+        if (this.evolution_select.value != 'Any') {
+            filters.push(
+                new FilterConfig(DexPage.POKEMON_EVOLUTION_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, this.evolution_select.value).setMonFunc(
+                    (gen_key, gen_value, filter_values) => {
+                        if (filter_values.includes('First') && (gen_value.Prevo || gen_value.Evolutions == undefined)) return false
+                        if (filter_values.includes('Final') && (gen_value.Prevo == undefined || gen_value.Evolutions)) return false
+                        if (filter_values.includes('Single') && (gen_value.Prevo || gen_value.Evolutions)) return false
+
+                        return true
+                    },
+                ),
+            )
+        }
+
+        if (this.hide_legendary_checkbox.checked) {
+            filters.push(
+                new FilterConfig(DexPage.POKEMON_HIDE_LEGENDS_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, true).setMonFunc(
+                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && !cdIsLegend(gen_key),
+                ),
+            )
+        }
+
+        return filters
+    }
+}
+customElements.define('party-pokemon-filter-form', PokemonFilterForm)
+
 class LoadingSplash extends HTMLElement {
     constructor() {
         super()
@@ -5,6 +75,22 @@ class LoadingSplash extends HTMLElement {
     }
 }
 customElements.define("party-loading-splash", LoadingSplash)
+
+class FilterGroupDisplay extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-filter-group-display-template')
+
+        this.header_div = this.getElementById('header_div')
+        this.data_div = this.getElementById('data_div')
+    }
+
+    setup(group_name, values) {
+        this.header_div.replaceChildren(group_name)
+        this.data_div.replaceChildren(Object.entries(values).map((kv) => `${kv[0]}: ${kv[1].values.join(',')}`))
+    }
+}
+customElements.define('party-filter-group-display', FilterGroupDisplay)
 
 function setupElement(element, templateId) {
     const template = document.getElementById(templateId).content
@@ -18,62 +104,147 @@ function setupElement(element, templateId) {
 class AtlasImg extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "party-atlas-img-template")
+        setupElement(this, 'party-atlas-img-template')
     }
 }
-customElements.define("party-atlas-img", AtlasImg)
+customElements.define('party-atlas-img', AtlasImg)
 
 function getAtlasImg(x, y, w, h, filename) {
-    const atlasImg = new AtlasImg()
-    const img = atlasImg.getElementById("img")
+    const atlas_img = new AtlasImg()
+    const img = atlas_img.getElementById('img')
     img.style = `width: ${w}px; height: ${h}px; background-image: url('${filename}'); background-position: -${x}px -${y}px;`
 
-    return atlasImg
+    return atlas_img
 }
 
 function getPokemonIconImg(id) {
-    const w = compiled_data.Atlas.sprite_atlas.icon.w
-    const h = compiled_data.Atlas.sprite_atlas.icon.h
-    const data = compiled_data.Atlas.sprite_atlas.icon[id]
-    return getAtlasImg(data.x, data.y, w, h, compiled_data.Atlas.sprite_atlas.artifact)
+    const w = compiled_data.Atlas.SpriteAtlas.Icon.w
+    const h = compiled_data.Atlas.SpriteAtlas.Icon.h
+    const data = compiled_data.Atlas.SpriteAtlas.Icon[id]
+    return getAtlasImg(data.x, data.y, w, h, compiled_data.Atlas.SpriteAtlas.Artifact)
 }
 
 function getPokemonFrontImg(id) {
-    const w = compiled_data.Atlas.sprite_atlas.front.w
-    const h = compiled_data.Atlas.sprite_atlas.front.h
-    const data = compiled_data.Atlas.sprite_atlas.front[id]
-    return getAtlasImg(data.x, data.y, w, h, compiled_data.Atlas.sprite_atlas.artifact)
+    const w = compiled_data.Atlas.SpriteAtlas.Front.w
+    const h = compiled_data.Atlas.SpriteAtlas.Front.h
+    const data = compiled_data.Atlas.SpriteAtlas.Front[id]
+    return getAtlasImg(data.x, data.y, w, h, compiled_data.Atlas.SpriteAtlas.Artifact)
+}
+
+class FilterTarget {
+    constructor(div, target, generators) {
+        this.div = div
+        this.target = target
+        this.generators = generators
+    }
 }
 
 class DexPage extends HTMLElement {
+    static FILTER_GROUP_POKEMON = 'pokemon'
+
+    static POKEMON_GENERATION_FILTER_ID = 'pokemon_generation'
+    static POKEMON_EVOLUTION_FILTER_ID = 'pokemon_evolution'
+    static POKEMON_HIDE_LEGENDS_FILTER_ID = 'pokemon_legends'
+
+    static FILTER_TARGET_POKEMON = 'target_func_pokemon'
+
     constructor() {
         super()
         setupElement(this, 'party-dex-page-template')
 
-        this.test = this.getElementById('test')
-        this.test.populate(['a', 'b', 'c'])
-        this.test.onSelect = (value) => console.log(value)
+        this.add_filter_button = this.getElementById('add_filter_button')
+        this.filter_form = this.getElementById('filter_form')
+        this.applied_filters_list = this.getElementById('applied_filters_list')
+        this.pokemon_list = this.getElementById('pokemon_list')
 
-        this.filterOptions = [
-            this.getElementById('filterOptionPokemon'),
-            this.getElementById('filterOptionAbility'),
-            this.getElementById('filterOptionMove'),
-        ]
-        this.filterOptions.forEach((opt) => {
-            opt.onclick = (key) => console.log(key)
+        this.filter_options = [{ id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null }]
+        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_TARGET_POKEMON, [cdGetPokemon])]
+
+        this.current_filter_opt = null
+        this.applied_filters = []
+
+        this.add_filter_button.onclick = () => this.addCurrentFilter()
+        this.filter_options.forEach((opt) => (this.getElementById(opt.id).onclick = (_) => this.setFilterForm(opt)))
+
+        this.applyFilters([])
+        this.setFilterForm(this.filter_options[0])
+    }
+
+    applyFilters(filter_configs) {
+        // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs. Group name is used for display
+        const grouped_filters = filter_configs.reduce((acc, data) => {
+            acc[data.group] ??= {}
+            const obj = (acc[data.group][data.id] ??= { funcs: data.funcs })
+            const list = (obj.values ??= [])
+
+            list.push(data.value)
+            return acc
+        }, {})
+
+        this.filter_targets.forEach((ft) => {
+            const imgs = ft.generators.map((generator) => {
+                return generator((gen_key, gen_value) => {
+                    if (grouped_filters.length == 0) return true
+
+                    for (const groupedFilter of Object.entries(grouped_filters)) {
+                        for (const filter of Object.values(groupedFilter[1])) {
+                            const filter_values = filter.values
+                            const filtering_func = filter.funcs[ft.target]
+                            if (!filtering_func(gen_key, gen_value, filter_values)) return false
+                        }
+                    }
+
+                    return true
+                }).map((kv) => getPokemonIconImg(kv[0]))
+            })
+            ft.div.replaceChildren(...imgs.flat(Infinity))
         })
+
+        this.applied_filters_list.replaceChildren(
+            ...Object.entries(grouped_filters).map((kv) => {
+                const filter_group_display = new FilterGroupDisplay()
+                filter_group_display.setup(kv[0], kv[1])
+
+                return filter_group_display
+            }),
+        )
+    }
+
+    setFilterForm(filter_opt) {
+        if (this.current_filter_opt == filter_opt) return
+
+        filter_opt.in_progress_form = filter_opt.in_progress_form ?? filter_opt.new_form_func()
+        filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
+
+        this.current_filter_opt = filter_opt
+        this.filter_form.replaceChildren(filter_opt.in_progress_form)
+    }
+
+    inProgressFilterHasChanges() {
+        const filters = this.current_filter_opt.in_progress_form.getFilters()
+        this.applyFilters([...this.applied_filters, ...filters])
+    }
+
+    addCurrentFilter() {
+        this.applied_filters.push(...this.current_filter_opt.in_progress_form.getFilters())
+        this.applyFilters(this.applied_filters)
+
+        this.current_filter_opt.in_progress_form = this.current_filter_opt.new_form_func()
+        this.current_filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
+
+        this.filter_form.replaceChildren(this.current_filter_opt.in_progress_form)
     }
 }
 customElements.define('party-dex-page', DexPage)
 
-class HeaderOption extends HTMLElement {
+class FilterOption extends HTMLElement {
     static get observedAttributes() {
         return ['key']
     }
 
     constructor() {
         super()
-        setupElement(this, 'party-header-option-template')
+        setupElement(this, 'party-filter-option-template')
 
         this.header = this.getElementById('header')
     }
@@ -82,13 +253,13 @@ class HeaderOption extends HTMLElement {
         this.header.onclick = () => func(this.key)
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback(name, _, new_value) {
         if (name === 'key') {
-            this.key = newValue
+            this.key = new_value
         }
     }
 }
-customElements.define('party-header-option', HeaderOption)
+customElements.define('party-filter-option', FilterOption)
 
 class Dropdown extends HTMLElement {
     static get observedAttributes() {
@@ -107,9 +278,9 @@ class Dropdown extends HTMLElement {
         this.list.addEventListener('input', (e) => func(e.target.value))
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback(name, _, new_value) {
         if (name === 'placeholder') {
-            this.list.setAttribute('placeholder', newValue || '')
+            this.list.setAttribute('placeholder', new_value || '')
         }
     }
 
@@ -125,10 +296,25 @@ class Dropdown extends HTMLElement {
 }
 customElements.define('party-drop-down', Dropdown)
 
+class FilterConfig {
+    constructor(id, group, value) {
+        this.id = id
+        this.group = group
+        this.value = value
+        this.funcs = {} // Filter funcs always indicate the value passes the filter (return true)
+    }
+
+    setMonFunc(func) {
+        this.funcs[DexPage.FILTER_TARGET_POKEMON] = func
+        return this
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => getBuildData())
 
 var compiled_data
 var sprite_atlas_img
+var cached_data = {}
 
 async function getBuildData() {
     const loadingSplash = document.getElementById('loadingSplash')
@@ -136,6 +322,7 @@ async function getBuildData() {
     async function handleData() {
         const response = await fetch('data.json')
         compiled_data = await response.json()
+        cdBuildCachedData()
     }
 
     try {
@@ -148,11 +335,34 @@ async function getBuildData() {
             sprite_atlas_img.src = 'sprite_atlas.png'
         })
 
-        Promise.all([data_promise, sprite_atlas_promise]).then(() => {
-            loadingSplash.remove()
-            document.body.appendChild(new DexPage())
-        }).catch((err) => console.log(`Data load error: ${err}`))
+        Promise.all([data_promise, sprite_atlas_promise])
+            .then(() => {
+                loadingSplash.remove()
+                document.body.appendChild(new DexPage())
+            })
+            .catch((err) => console.log(`Data load error: ${err}`))
     } catch (error) {
         console.error(error.message)
     }
 }
+
+function cdBuildCachedData() {
+    cached_data.generations = [...new Set(Object.values(compiled_data.PBS.Pokemon).map((x) => x.Generation))]
+        .filter((x) => x)
+        .sort()
+}
+
+function cdGetPokemon(filter) {
+    const pokemon = Object.entries(compiled_data.PBS.Pokemon)
+    return filter ? pokemon.filter((kv) => filter(kv[0], kv[1])) : pokemon
+}
+
+function cdIsLegend(pokemon_id) {
+    const flags = compiled_data.PBS.Pokemon[pokemon_id].Flags
+
+    if (flags == undefined) return false
+    if (!Array.isArray(flags)) return flags == 'Legendary'
+
+    return flags.some((x) => x == 'Legendary')
+}
+
