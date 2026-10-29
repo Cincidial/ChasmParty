@@ -403,6 +403,6 @@ function globalIsLegend(pokemon_id) {
 }
 
 function globalIsStarter(pokemon_id) {
-    return local_data.starters.has(pokemon_id)
+    return local_data.starters.has(local_data.evolution_roots[pokemon_id])
 }
 
