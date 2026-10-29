@@ -5,7 +5,7 @@ class PokemonFilterForm extends HTMLElement {
 
         this.generation_select = this.getElementById('generation_select')
         this.generation_select.replaceChildren(
-            ...['Any', ...cached_data.generations].map((gen) => {
+            ...['Any', ...local_data.generations].map((gen) => {
                 var element = document.createElement('option')
                 element.value = gen
                 element.innerHTML = gen
@@ -15,29 +15,30 @@ class PokemonFilterForm extends HTMLElement {
 
         this.evolution_select = this.getElementById('evolution_select')
         this.hide_legendary_checkbox = this.getElementById('hide_legendary_checkbox')
+        this.starter_only_checkbox = this.getElementById('starter_only_checkbox')
     }
 
     set onChange(func) {
         this.generation_select.onchange = func
         this.evolution_select.onchange = func
         this.hide_legendary_checkbox.onchange = func
+        this.starter_only_checkbox.onchange = func
     }
 
     clear() {
         this.generation_select.value = 'Any'
         this.evolution_select.value = 'Any'
         this.hide_legendary_checkbox.checked = false
+        this.starter_only_checkbox.checked = false
     }
 
     getFilters() {
         const filters = []
         if (this.generation_select.value != 'Any') {
             filters.push(
-                new FilterConfig(
-                    DexPage.POKEMON_GENERATION_FILTER_ID,
-                    DexPage.FILTER_GROUP_POKEMON,
-                    this.generation_select.value,
-                ).setMonFunc((gen_key, gen_value, filter_values) => filter_values.includes(`${gen_value.Generation ?? -1}`)),
+                new FilterConfig(DexPage.POKEMON_GENERATION_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, this.generation_select.value).setMonFunc(
+                    (gen_key, gen_value, filter_values) => filter_values.includes(`${gen_value.Generation ?? -1}`),
+                ),
             )
         }
 
@@ -45,11 +46,11 @@ class PokemonFilterForm extends HTMLElement {
             filters.push(
                 new FilterConfig(DexPage.POKEMON_EVOLUTION_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, this.evolution_select.value).setMonFunc(
                     (gen_key, gen_value, filter_values) => {
-                        if (filter_values.includes('First') && (gen_value.Prevo || gen_value.Evolutions == undefined)) return false
-                        if (filter_values.includes('Final') && (gen_value.Prevo == undefined || gen_value.Evolutions)) return false
-                        if (filter_values.includes('Single') && (gen_value.Prevo || gen_value.Evolutions)) return false
+                        if (filter_values.includes('First') && gen_value.Prevo == undefined && gen_value.Evolutions) return true
+                        if (filter_values.includes('Final') && gen_value.Prevo && gen_value.Evolutions == undefined) return true
+                        if (filter_values.includes('Single') && gen_value.Prevo == undefined && gen_value.Evolutions == undefined) return true
 
-                        return true
+                        return false
                     },
                 ),
             )
@@ -58,7 +59,15 @@ class PokemonFilterForm extends HTMLElement {
         if (this.hide_legendary_checkbox.checked) {
             filters.push(
                 new FilterConfig(DexPage.POKEMON_HIDE_LEGENDS_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, true).setMonFunc(
-                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && !cdIsLegend(gen_key),
+                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && !globalIsLegend(gen_key),
+                ),
+            )
+        }
+
+        if (this.starter_only_checkbox.checked) {
+            filters.push(
+                new FilterConfig(DexPage.POKEMON_STARTERS_ONLY_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, true).setMonFunc(
+                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsStarter(gen_key),
                 ),
             )
         }
@@ -118,24 +127,24 @@ function getAtlasImg(x, y, w, h, filename) {
 }
 
 function getPokemonIconImg(id) {
-    const w = compiled_data.Atlas.SpriteAtlas.Icon.w
-    const h = compiled_data.Atlas.SpriteAtlas.Icon.h
-    const data = compiled_data.Atlas.SpriteAtlas.Icon[id]
-    return getAtlasImg(data.x, data.y, w, h, compiled_data.Atlas.SpriteAtlas.Artifact)
+    const w = server_data.Atlas.SpriteAtlas.Icon.w
+    const h = server_data.Atlas.SpriteAtlas.Icon.h
+    const data = server_data.Atlas.SpriteAtlas.Icon[id]
+    return getAtlasImg(data.x, data.y, w, h, server_data.Atlas.SpriteAtlas.Artifact)
 }
 
 function getPokemonFrontImg(id) {
-    const w = compiled_data.Atlas.SpriteAtlas.Front.w
-    const h = compiled_data.Atlas.SpriteAtlas.Front.h
-    const data = compiled_data.Atlas.SpriteAtlas.Front[id]
-    return getAtlasImg(data.x, data.y, w, h, compiled_data.Atlas.SpriteAtlas.Artifact)
+    const w = server_data.Atlas.SpriteAtlas.Front.w
+    const h = server_data.Atlas.SpriteAtlas.Front.h
+    const data = server_data.Atlas.SpriteAtlas.Front[id]
+    return getAtlasImg(data.x, data.y, w, h, server_data.Atlas.SpriteAtlas.Artifact)
 }
 
 class FilterTarget {
-    constructor(div, target, generators) {
+    constructor(div, func_id, generator) {
         this.div = div
-        this.target = target
-        this.generators = generators
+        this.func_id = func_id
+        this.generator = generator
     }
 }
 
@@ -145,8 +154,9 @@ class DexPage extends HTMLElement {
     static POKEMON_GENERATION_FILTER_ID = 'pokemon_generation'
     static POKEMON_EVOLUTION_FILTER_ID = 'pokemon_evolution'
     static POKEMON_HIDE_LEGENDS_FILTER_ID = 'pokemon_legends'
+    static POKEMON_STARTERS_ONLY_FILTER_ID = 'pokemon_starters'
 
-    static FILTER_TARGET_POKEMON = 'target_func_pokemon'
+    static FILTER_FUNC_POKEMON = 'filter_func_pokemon'
 
     constructor() {
         super()
@@ -158,7 +168,7 @@ class DexPage extends HTMLElement {
         this.pokemon_list = this.getElementById('pokemon_list')
 
         this.filter_options = [{ id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null }]
-        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_TARGET_POKEMON, [cdGetPokemon])]
+        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, globalGetPokemon)]
 
         this.current_filter_opt = null
         this.applied_filters = []
@@ -181,23 +191,27 @@ class DexPage extends HTMLElement {
             return acc
         }, {})
 
+        this.filter_targets.forEach((ft) => ft.div.replaceChildren())
         this.filter_targets.forEach((ft) => {
-            const imgs = ft.generators.map((generator) => {
-                return generator((gen_key, gen_value) => {
+            const imgs = ft
+                .generator((gen_key, gen_value) => {
                     if (grouped_filters.length == 0) return true
 
                     for (const groupedFilter of Object.entries(grouped_filters)) {
                         for (const filter of Object.values(groupedFilter[1])) {
                             const filter_values = filter.values
-                            const filtering_func = filter.funcs[ft.target]
+                            const filtering_func = filter.funcs[ft.func_id]
+
+                            if (filtering_func == undefined) continue
                             if (!filtering_func(gen_key, gen_value, filter_values)) return false
                         }
                     }
 
                     return true
-                }).map((kv) => getPokemonIconImg(kv[0]))
-            })
-            ft.div.replaceChildren(...imgs.flat(Infinity))
+                })
+                .map((kv) => getPokemonIconImg(kv[0]))
+
+            ft.div.append(...imgs)
         })
 
         this.applied_filters_list.replaceChildren(
@@ -305,24 +319,24 @@ class FilterConfig {
     }
 
     setMonFunc(func) {
-        this.funcs[DexPage.FILTER_TARGET_POKEMON] = func
+        this.funcs[DexPage.FILTER_FUNC_POKEMON] = func
         return this
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => getBuildData())
+document.addEventListener('DOMContentLoaded', () => getServerData())
 
-var compiled_data
+var server_data
 var sprite_atlas_img
-var cached_data = {}
+var local_data = {}
 
-async function getBuildData() {
+async function getServerData() {
     const loadingSplash = document.getElementById('loadingSplash')
 
     async function handleData() {
         const response = await fetch('data.json')
-        compiled_data = await response.json()
-        cdBuildCachedData()
+        server_data = await response.json()
+        globalBuildLocalData()
     }
 
     try {
@@ -346,23 +360,49 @@ async function getBuildData() {
     }
 }
 
-function cdBuildCachedData() {
-    cached_data.generations = [...new Set(Object.values(compiled_data.PBS.Pokemon).map((x) => x.Generation))]
-        .filter((x) => x)
-        .sort()
+function globalBuildLocalData() {
+    local_data.generations = [...new Set(Object.values(server_data.PBS.Pokemon).map((x) => x.Generation))].filter((x) => x).sort()
+    local_data.starters = new Set(
+        Object.values(server_data.PBS.Encounters)
+            .filter((x) => x.Name.includes('Starter'))
+            .flatMap((x) => x.Tables[0].Encounters.map((y) => y.Pokemon)),
+    )
+
+    local_data.evolution_roots = Object.fromEntries(
+        Object.entries(server_data.PBS.Pokemon)
+            .filter((kv) => kv[1].Prevo == undefined)
+            .map((kv) => [kv[0], kv[0]]),
+    )
+    const evolutions_to_process = Object.keys(local_data.evolution_roots)
+    while (evolutions_to_process.length > 0) {
+        const processing_mon_key = evolutions_to_process.pop()
+        const root = local_data.evolution_roots[processing_mon_key]
+        const mon = server_data.PBS.Pokemon[processing_mon_key]
+
+        if (mon.Evolutions) {
+            mon.Evolutions.forEach((evo) => {
+                local_data.evolution_roots[evo.Pokemon] = root
+                evolutions_to_process.push(evo.Pokemon)
+            })
+        }
+    }
 }
 
-function cdGetPokemon(filter) {
-    const pokemon = Object.entries(compiled_data.PBS.Pokemon)
+function globalGetPokemon(filter) {
+    const pokemon = Object.entries(server_data.PBS.Pokemon)
     return filter ? pokemon.filter((kv) => filter(kv[0], kv[1])) : pokemon
 }
 
-function cdIsLegend(pokemon_id) {
-    const flags = compiled_data.PBS.Pokemon[pokemon_id].Flags
+function globalIsLegend(pokemon_id) {
+    const flags = server_data.PBS.Pokemon[pokemon_id].Flags
 
     if (flags == undefined) return false
     if (!Array.isArray(flags)) return flags == 'Legendary'
 
     return flags.some((x) => x == 'Legendary')
+}
+
+function globalIsStarter(pokemon_id) {
+    return local_data.starters.has(pokemon_id)
 }
 

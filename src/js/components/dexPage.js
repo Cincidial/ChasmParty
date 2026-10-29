@@ -1,8 +1,8 @@
 class FilterTarget {
-    constructor(div, target, generators) {
+    constructor(div, func_id, generator) {
         this.div = div
-        this.target = target
-        this.generators = generators
+        this.func_id = func_id
+        this.generator = generator
     }
 }
 
@@ -12,8 +12,9 @@ class DexPage extends HTMLElement {
     static POKEMON_GENERATION_FILTER_ID = 'pokemon_generation'
     static POKEMON_EVOLUTION_FILTER_ID = 'pokemon_evolution'
     static POKEMON_HIDE_LEGENDS_FILTER_ID = 'pokemon_legends'
+    static POKEMON_STARTERS_ONLY_FILTER_ID = 'pokemon_starters'
 
-    static FILTER_TARGET_POKEMON = 'target_func_pokemon'
+    static FILTER_FUNC_POKEMON = 'filter_func_pokemon'
 
     constructor() {
         super()
@@ -25,7 +26,7 @@ class DexPage extends HTMLElement {
         this.pokemon_list = this.getElementById('pokemon_list')
 
         this.filter_options = [{ id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null }]
-        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_TARGET_POKEMON, [cdGetPokemon])]
+        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, globalGetPokemon)]
 
         this.current_filter_opt = null
         this.applied_filters = []
@@ -48,23 +49,27 @@ class DexPage extends HTMLElement {
             return acc
         }, {})
 
+        this.filter_targets.forEach((ft) => ft.div.replaceChildren())
         this.filter_targets.forEach((ft) => {
-            const imgs = ft.generators.map((generator) => {
-                return generator((gen_key, gen_value) => {
+            const imgs = ft
+                .generator((gen_key, gen_value) => {
                     if (grouped_filters.length == 0) return true
 
                     for (const groupedFilter of Object.entries(grouped_filters)) {
                         for (const filter of Object.values(groupedFilter[1])) {
                             const filter_values = filter.values
-                            const filtering_func = filter.funcs[ft.target]
+                            const filtering_func = filter.funcs[ft.func_id]
+
+                            if (filtering_func == undefined) continue
                             if (!filtering_func(gen_key, gen_value, filter_values)) return false
                         }
                     }
 
                     return true
-                }).map((kv) => getPokemonIconImg(kv[0]))
-            })
-            ft.div.replaceChildren(...imgs.flat(Infinity))
+                })
+                .map((kv) => getPokemonIconImg(kv[0]))
+
+            ft.div.append(...imgs)
         })
 
         this.applied_filters_list.replaceChildren(

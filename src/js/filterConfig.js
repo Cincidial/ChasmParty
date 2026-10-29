@@ -7,7 +7,7 @@ class FilterConfig {
     }
 
     setMonFunc(func) {
-        this.funcs[DexPage.FILTER_TARGET_POKEMON] = func
+        this.funcs[DexPage.FILTER_FUNC_POKEMON] = func
         return this
     }
 }
