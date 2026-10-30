@@ -11,8 +11,12 @@ class Dropdown extends HTMLElement {
         this.list = this.getElementById('list')
     }
 
-    set onSelect(func) {
-        this.list.addEventListener('input', (e) => func(e.target.value))
+    get value() {
+        return this.list.value
+    }
+
+    set onchange(func) {
+        this.list.addEventListener('input', (e) => func())
     }
 
     attributeChangedCallback(name, _, new_value) {

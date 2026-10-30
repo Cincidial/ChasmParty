@@ -7,13 +7,6 @@ class FilterTarget {
 }
 
 class DexPage extends HTMLElement {
-    static FILTER_GROUP_POKEMON = 'pokemon'
-
-    static POKEMON_GENERATION_FILTER_ID = 'pokemon_generation'
-    static POKEMON_EVOLUTION_FILTER_ID = 'pokemon_evolution'
-    static POKEMON_HIDE_LEGENDS_FILTER_ID = 'pokemon_legends'
-    static POKEMON_STARTERS_ONLY_FILTER_ID = 'pokemon_starters'
-
     static FILTER_FUNC_POKEMON = 'filter_func_pokemon'
 
     constructor() {

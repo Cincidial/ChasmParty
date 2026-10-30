@@ -1,4 +1,6 @@
 class PokemonFilterForm extends HTMLElement {
+    static FILTER_GROUP = 'pokemon'
+
     constructor() {
         super()
         setupElement(this, 'party-pokemon-filter-form-template')
@@ -16,6 +18,9 @@ class PokemonFilterForm extends HTMLElement {
         this.evolution_select = this.getElementById('evolution_select')
         this.hide_legendary_checkbox = this.getElementById('hide_legendary_checkbox')
         this.starter_only_checkbox = this.getElementById('starter_only_checkbox')
+        this.search_dropdown = this.getElementById('search_dropdown')
+
+        this.search_dropdown.populate(globalGetPokemon().map((kv) => kv[1].Name))
     }
 
     set onChange(func) {
@@ -23,20 +28,14 @@ class PokemonFilterForm extends HTMLElement {
         this.evolution_select.onchange = func
         this.hide_legendary_checkbox.onchange = func
         this.starter_only_checkbox.onchange = func
-    }
-
-    clear() {
-        this.generation_select.value = 'Any'
-        this.evolution_select.value = 'Any'
-        this.hide_legendary_checkbox.checked = false
-        this.starter_only_checkbox.checked = false
+        this.search_dropdown.onchange = func
     }
 
     getFilters() {
         const filters = []
         if (this.generation_select.value != 'Any') {
             filters.push(
-                new FilterConfig(DexPage.POKEMON_GENERATION_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, this.generation_select.value).setMonFunc(
+                new FilterConfig('pokemon_generation', PokemonFilterForm.FILTER_GROUP, this.generation_select.value).setMonFunc(
                     (gen_key, gen_value, filter_values) => filter_values.includes(`${gen_value.Generation ?? -1}`),
                 ),
             )
@@ -44,7 +43,7 @@ class PokemonFilterForm extends HTMLElement {
 
         if (this.evolution_select.value != 'Any') {
             filters.push(
-                new FilterConfig(DexPage.POKEMON_EVOLUTION_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, this.evolution_select.value).setMonFunc(
+                new FilterConfig('pokemon_evolution', PokemonFilterForm.FILTER_GROUP, this.evolution_select.value).setMonFunc(
                     (gen_key, gen_value, filter_values) => {
                         if (filter_values.includes('First') && gen_value.Prevo == undefined && gen_value.Evolutions) return true
                         if (filter_values.includes('Final') && gen_value.Prevo && gen_value.Evolutions == undefined) return true
@@ -58,7 +57,7 @@ class PokemonFilterForm extends HTMLElement {
 
         if (this.hide_legendary_checkbox.checked) {
             filters.push(
-                new FilterConfig(DexPage.POKEMON_HIDE_LEGENDS_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, true).setMonFunc(
+                new FilterConfig('pokemon_hide_legends', PokemonFilterForm.FILTER_GROUP, true).setMonFunc(
                     (gen_key, gen_value, filter_values) => filter_values.includes(true) && !globalIsLegend(gen_key),
                 ),
             )
@@ -66,8 +65,16 @@ class PokemonFilterForm extends HTMLElement {
 
         if (this.starter_only_checkbox.checked) {
             filters.push(
-                new FilterConfig(DexPage.POKEMON_STARTERS_ONLY_FILTER_ID, DexPage.FILTER_GROUP_POKEMON, true).setMonFunc(
+                new FilterConfig('pokemon_startes_only', PokemonFilterForm.FILTER_GROUP, true).setMonFunc(
                     (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsStarter(gen_key),
+                ),
+            )
+        }
+
+        if (this.search_dropdown.value) {
+            filters.push(
+                new FilterConfig('pokemon_search', PokemonFilterForm.FILTER_GROUP, this.search_dropdown.value).setMonFunc(
+                    (gen_key, gen_value, filter_values) => filter_values.some((x) => gen_value.Name.toLowerCase().includes(x.toLowerCase())),
                 ),
             )
         }
