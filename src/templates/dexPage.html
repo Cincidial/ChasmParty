@@ -1,11 +1,13 @@
 <template id="party-dex-page-template">
     <style>
-        .card {
-            background: #ffffff;
+        .filterCard {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             box-shadow: 3px 3px 5px #00000022;
             padding: 3px;
+            margin: 5px;
+            width: 50%;
+            min-height: 10vh;
         }
 
         .filteredList {
@@ -16,15 +18,18 @@
         }
     </style>
     <h1 style="text-align: center">Pokédex</h1>
-    <div class="card" style="width: 300px">
-        <div>
-            <party-filter-option id="filter_option_pokemon" key="pokemon">Pokémon</party-filter-option>
-            <party-filter-option id="filter_option_ability" key="ability">Ability</party-filter-option>
-            <party-filter-option id="filter_option_move" key="move">Move</party-filter-option>
-            <span id="add_filter_button">Add Filter</span>
+    <div style="display: flex; flex-direction: row; overflow: scroll">
+        <div class="filterCard default-dark-accent1">
+            <div style="margin-bottom: 5px">
+                <span id="add_filter_button" class="button" style="margin-right: 10px">Add Filter</span>
+                <party-filter-option id="filter_option_pokemon" key="pokemon">Pokémon</party-filter-option>
+                <party-filter-option id="filter_option_ability" key="ability">Ability</party-filter-option>
+                <party-filter-option id="filter_option_move" key="move">Move</party-filter-option>
+            </div>
+            <hr style="color: #e8eadd" />
+            <div id="filter_form"></div>
         </div>
-        <div id="filter_form"></div>
+        <div id="applied_filters_list" class="filterCard"></div>
     </div>
-    <div id="applied_filters_list" class="card"></div>
     <div id="pokemon_list" class="filteredList"></div>
 </template>

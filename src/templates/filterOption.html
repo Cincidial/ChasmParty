@@ -1,9 +1,16 @@
 <template id="party-filter-option-template">
     <style>
-        .optionHeader {
-            text-decoration: underline;
+        :host {
+            font-size: 22px;
+            border-bottom: 3px solid #7d9198;
             cursor: pointer;
+            padding-left: 8px;
+            padding-right: 3px;
+            padding-bottom: 3px;
+        }
+        :host([active]) {
+            border-bottom-color: #e8eadd;
         }
     </style>
-    <span id="header" class="optionHeader"><slot></slot></span>
+    <span id="header"><slot></slot></span>
 </template>

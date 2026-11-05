@@ -10,8 +10,12 @@ class FilterOption extends HTMLElement {
         this.header = this.getElementById('header')
     }
 
-    set onclick(func) {
-        this.header.onclick = () => func(this.key)
+    set active(value) {
+        if (value === true) {
+            this.setAttribute('active', '')
+        } else {
+            this.removeAttribute('active')
+        }
     }
 
     attributeChangedCallback(name, _, new_value) {

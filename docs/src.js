@@ -111,12 +111,19 @@ customElements.define('party-filter-group-display', FilterGroupDisplay)
 function setupElement(element, templateId) {
     const template = document.getElementById(templateId).content
     const node = document.importNode(template, true)
-    
-    element.root = element.attachShadow({mode: 'open'})
+
+    const shadow_link = document.createElement('link')
+    shadow_link.rel = 'stylesheet'
+    shadow_link.type = 'text/css'
+    shadow_link.href = 'style.css'
+
+    element.root = element.attachShadow({ mode: 'open' })
+    element.root.appendChild(shadow_link)
     element.root.appendChild(node)
 
     element.getElementById = (id) => element.root.getElementById(id)
 }
+
 class AtlasImg extends HTMLElement {
     constructor() {
         super()
@@ -167,7 +174,11 @@ class DexPage extends HTMLElement {
         this.applied_filters_list = this.getElementById('applied_filters_list')
         this.pokemon_list = this.getElementById('pokemon_list')
 
-        this.filter_options = [{ id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null }]
+        this.filter_options = [
+            { id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
+            { id: 'filter_option_ability', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
+            { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
+        ]
         this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, globalGetPokemon)]
 
         this.current_filter_opt = null
@@ -227,11 +238,15 @@ class DexPage extends HTMLElement {
     setFilterForm(filter_opt) {
         if (this.current_filter_opt == filter_opt) return
 
+        if (this.current_filter_opt != null) this.getElementById(this.current_filter_opt.id).active = false
+        this.getElementById(filter_opt.id).active = true
+
         filter_opt.in_progress_form = filter_opt.in_progress_form ?? filter_opt.new_form_func()
         filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
 
         this.current_filter_opt = filter_opt
         this.filter_form.replaceChildren(filter_opt.in_progress_form)
+        this.inProgressFilterHasChanges()
     }
 
     inProgressFilterHasChanges() {
@@ -263,8 +278,12 @@ class FilterOption extends HTMLElement {
         this.header = this.getElementById('header')
     }
 
-    set onclick(func) {
-        this.header.onclick = () => func(this.key)
+    set active(value) {
+        if (value === true) {
+            this.setAttribute('active', '')
+        } else {
+            this.removeAttribute('active')
+        }
     }
 
     attributeChangedCallback(name, _, new_value) {
