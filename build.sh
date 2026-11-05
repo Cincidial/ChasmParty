@@ -12,3 +12,5 @@ sed -e '/#REPLACE_WITH_TEMPLATES#/{
     d
 }' src/index.html > docs/index.html
 rm -f docs/templates.tmp
+
+cp src/style.css docs/style.css

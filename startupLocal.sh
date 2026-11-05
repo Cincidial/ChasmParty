@@ -8,6 +8,6 @@
 trap 'kill $(jobs -p) 2>/dev/null' INT TERM EXIT
 
 python3 -m http.server --directory docs/ &
-inotifywait -mr -e close_write --include '\.(js|html)$' ./src | while read -r dir events file; do
+inotifywait -mr -e close_write --include '\.(js|html|css)$' ./src | while read -r dir events file; do
     ./build.sh
 done
