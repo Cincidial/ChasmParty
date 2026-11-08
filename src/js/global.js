@@ -67,13 +67,17 @@ function globalGetPokemon(filter) {
     return filter ? pokemon.filter((kv) => filter(kv[0], kv[1])) : pokemon
 }
 
+function globalGetAbilities(filter) {
+    const abilities = Object.entries(server_data.PBS.Abilities)
+    return filter ? abilities.filter((kv) => filter(kv[0], kv[1])) : abilities
+}
+
+function globalGetAbilitiesById(ids) {
+    return ids.map((x) => server_data.PBS.Abilities[x])
+}
+
 function globalIsLegend(pokemon_id) {
-    const flags = server_data.PBS.Pokemon[pokemon_id].Flags
-
-    if (flags == undefined) return false
-    if (!Array.isArray(flags)) return flags == 'Legendary'
-
-    return flags.some((x) => x == 'Legendary')
+    return server_data.PBS.Pokemon[pokemon_id].Flags?.some((x) => x == 'Legendary') ?? false
 }
 
 function globalIsStarter(pokemon_id) {

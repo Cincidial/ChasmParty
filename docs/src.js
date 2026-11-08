@@ -14,6 +14,7 @@ class PokemonFilterForm extends HTMLElement {
         )
 
         this.evolution_select = this.getElementById('evolution_select')
+        this.only_legendary_checkbox = this.getElementById('only_legendary_checkbox')
         this.hide_legendary_checkbox = this.getElementById('hide_legendary_checkbox')
         this.starter_only_checkbox = this.getElementById('starter_only_checkbox')
         this.search_dropdown = this.getElementById('search_dropdown')
@@ -24,6 +25,7 @@ class PokemonFilterForm extends HTMLElement {
     set onChange(func) {
         this.generation_select.onchange = func
         this.evolution_select.onchange = func
+        this.only_legendary_checkbox.onchange = func
         this.hide_legendary_checkbox.onchange = func
         this.starter_only_checkbox.onchange = func
         this.search_dropdown.onchange = func
@@ -48,6 +50,14 @@ class PokemonFilterForm extends HTMLElement {
 
                     return false
                 }),
+            )
+        }
+
+        if (this.only_legendary_checkbox.checked) {
+            filters.push(
+                new FilterConfig('Only Legends', true).setMonFunc(
+                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsLegend(gen_key),
+                ),
             )
         }
 
@@ -87,6 +97,58 @@ class LoadingSplash extends HTMLElement {
     }
 }
 customElements.define("party-loading-splash", LoadingSplash)
+
+class AbilityFilterForm extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-ability-filter-form-template')
+
+        this.is_primival_checkbox = this.getElementById('is_primival_checkbox')
+        this.name_dropdown = this.getElementById('name_dropdown')
+        this.desc_input = this.getElementById('desc_input')
+
+        this.name_dropdown.populate(globalGetAbilities().map((kv) => kv[1].Name))
+    }
+
+    set onChange(func) {
+        this.is_primival_checkbox.onchange = func
+        this.name_dropdown.onchange = func
+        this.desc_input.oninput = func
+    }
+
+    getFilters() {
+        const filters = []
+        if (this.is_primival_checkbox.checked) {
+            filters.push(
+                new FilterConfig('Primeval Ability', true).setMonFunc(
+                    (gen_key, gen_value, filter_values) =>
+                        filter_values.includes(true) && globalGetAbilitiesById(gen_value.Abilities).some((x) => x.IsPrimeval),
+                ),
+            )
+        }
+
+        if (this.name_dropdown.value) {
+            filters.push(
+                new FilterConfig('Abilty Name', this.name_dropdown.value).setMonFunc((gen_key, gen_value, filter_values) => {
+                    const ability_names = globalGetAbilitiesById(gen_value.Abilities).map((a) => a.Name.toLowerCase())
+                    return filter_values.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                }),
+            )
+        }
+
+        if (this.desc_input.value) {
+            filters.push(
+                new FilterConfig('Ability Description', this.desc_input.value).setMonFunc((gen_key, gen_value, filter_values) => {
+                    const ability_descs = globalGetAbilitiesById(gen_value.Abilities).map((a) => a.Description.toLowerCase())
+                    return filter_values.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                }),
+            )
+        }
+
+        return filters
+    }
+}
+customElements.define('party-ability-filter-form', AbilityFilterForm)
 
 class FilterGroupDisplay extends HTMLElement {
     constructor() {
@@ -187,7 +249,7 @@ class DexPage extends HTMLElement {
 
         this.filter_options = [
             { id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
-            { id: 'filter_option_ability', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
+            { id: 'filter_option_ability', new_form_func: () => new AbilityFilterForm(), in_progress_form: null },
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
         this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, globalGetPokemon)]
@@ -430,13 +492,17 @@ function globalGetPokemon(filter) {
     return filter ? pokemon.filter((kv) => filter(kv[0], kv[1])) : pokemon
 }
 
+function globalGetAbilities(filter) {
+    const abilities = Object.entries(server_data.PBS.Abilities)
+    return filter ? abilities.filter((kv) => filter(kv[0], kv[1])) : abilities
+}
+
+function globalGetAbilitiesById(ids) {
+    return ids.map((x) => server_data.PBS.Abilities[x])
+}
+
 function globalIsLegend(pokemon_id) {
-    const flags = server_data.PBS.Pokemon[pokemon_id].Flags
-
-    if (flags == undefined) return false
-    if (!Array.isArray(flags)) return flags == 'Legendary'
-
-    return flags.some((x) => x == 'Legendary')
+    return server_data.PBS.Pokemon[pokemon_id].Flags?.some((x) => x == 'Legendary') ?? false
 }
 
 function globalIsStarter(pokemon_id) {

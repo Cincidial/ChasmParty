@@ -14,6 +14,7 @@ class PokemonFilterForm extends HTMLElement {
         )
 
         this.evolution_select = this.getElementById('evolution_select')
+        this.only_legendary_checkbox = this.getElementById('only_legendary_checkbox')
         this.hide_legendary_checkbox = this.getElementById('hide_legendary_checkbox')
         this.starter_only_checkbox = this.getElementById('starter_only_checkbox')
         this.search_dropdown = this.getElementById('search_dropdown')
@@ -24,6 +25,7 @@ class PokemonFilterForm extends HTMLElement {
     set onChange(func) {
         this.generation_select.onchange = func
         this.evolution_select.onchange = func
+        this.only_legendary_checkbox.onchange = func
         this.hide_legendary_checkbox.onchange = func
         this.starter_only_checkbox.onchange = func
         this.search_dropdown.onchange = func
@@ -48,6 +50,14 @@ class PokemonFilterForm extends HTMLElement {
 
                     return false
                 }),
+            )
+        }
+
+        if (this.only_legendary_checkbox.checked) {
+            filters.push(
+                new FilterConfig('Only Legends', true).setMonFunc(
+                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsLegend(gen_key),
+                ),
             )
         }
 

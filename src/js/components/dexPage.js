@@ -20,7 +20,7 @@ class DexPage extends HTMLElement {
 
         this.filter_options = [
             { id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
-            { id: 'filter_option_ability', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
+            { id: 'filter_option_ability', new_form_func: () => new AbilityFilterForm(), in_progress_form: null },
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
         this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, globalGetPokemon)]
