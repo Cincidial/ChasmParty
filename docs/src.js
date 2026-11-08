@@ -1,6 +1,4 @@
 class PokemonFilterForm extends HTMLElement {
-    static FILTER_GROUP = 'pokemon'
-
     constructor() {
         super()
         setupElement(this, 'party-pokemon-filter-form-template')
@@ -35,29 +33,27 @@ class PokemonFilterForm extends HTMLElement {
         const filters = []
         if (this.generation_select.value != 'Any') {
             filters.push(
-                new FilterConfig('pokemon_generation', PokemonFilterForm.FILTER_GROUP, this.generation_select.value).setMonFunc(
-                    (gen_key, gen_value, filter_values) => filter_values.includes(`${gen_value.Generation ?? -1}`),
+                new FilterConfig('Generation', this.generation_select.value).setMonFunc((gen_key, gen_value, filter_values) =>
+                    filter_values.includes(`${gen_value.Generation ?? -1}`),
                 ),
             )
         }
 
         if (this.evolution_select.value != 'Any') {
             filters.push(
-                new FilterConfig('pokemon_evolution', PokemonFilterForm.FILTER_GROUP, this.evolution_select.value).setMonFunc(
-                    (gen_key, gen_value, filter_values) => {
-                        if (filter_values.includes('First') && gen_value.Prevo == undefined && gen_value.Evolutions) return true
-                        if (filter_values.includes('Final') && gen_value.Prevo && gen_value.Evolutions == undefined) return true
-                        if (filter_values.includes('Single') && gen_value.Prevo == undefined && gen_value.Evolutions == undefined) return true
+                new FilterConfig('Evolution', this.evolution_select.value).setMonFunc((gen_key, gen_value, filter_values) => {
+                    if (filter_values.includes('First') && gen_value.Prevo == undefined && gen_value.Evolutions) return true
+                    if (filter_values.includes('Final') && gen_value.Prevo && gen_value.Evolutions == undefined) return true
+                    if (filter_values.includes('Single') && gen_value.Prevo == undefined && gen_value.Evolutions == undefined) return true
 
-                        return false
-                    },
-                ),
+                    return false
+                }),
             )
         }
 
         if (this.hide_legendary_checkbox.checked) {
             filters.push(
-                new FilterConfig('pokemon_hide_legends', PokemonFilterForm.FILTER_GROUP, true).setMonFunc(
+                new FilterConfig('Hide Legends', true).setMonFunc(
                     (gen_key, gen_value, filter_values) => filter_values.includes(true) && !globalIsLegend(gen_key),
                 ),
             )
@@ -65,7 +61,7 @@ class PokemonFilterForm extends HTMLElement {
 
         if (this.starter_only_checkbox.checked) {
             filters.push(
-                new FilterConfig('pokemon_startes_only', PokemonFilterForm.FILTER_GROUP, true).setMonFunc(
+                new FilterConfig('Starters Only', true).setMonFunc(
                     (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsStarter(gen_key),
                 ),
             )
@@ -73,8 +69,8 @@ class PokemonFilterForm extends HTMLElement {
 
         if (this.search_dropdown.value) {
             filters.push(
-                new FilterConfig('pokemon_search', PokemonFilterForm.FILTER_GROUP, this.search_dropdown.value).setMonFunc(
-                    (gen_key, gen_value, filter_values) => filter_values.some((x) => gen_value.Name.toLowerCase().includes(x.toLowerCase())),
+                new FilterConfig('Pokemon Search', this.search_dropdown.value).setMonFunc((gen_key, gen_value, filter_values) =>
+                    filter_values.some((x) => gen_value.Name.toLowerCase().includes(x.toLowerCase())),
                 ),
             )
         }
@@ -101,9 +97,24 @@ class FilterGroupDisplay extends HTMLElement {
         this.data_div = this.getElementById('data_div')
     }
 
-    setup(group_name, values) {
+    setup(group_name, filter_configs, remove_callback) {
         this.header_div.replaceChildren(group_name)
-        this.data_div.replaceChildren(Object.entries(values).map((kv) => `${kv[0]}: ${kv[1].values.join(',')}`))
+        this.data_div.replaceChildren(
+            ...filter_configs.map((x) => {
+                const capsule = new Capsule()
+                var text = x.value
+
+                if (text === true) {
+                    text = 'True'
+                } else if (text === false) {
+                    text = 'False'
+                }
+
+                capsule.setup(text, x, x.in_progress ? null : remove_callback)
+
+                return capsule
+            }),
+        )
     }
 }
 customElements.define('party-filter-group-display', FilterGroupDisplay)
@@ -192,13 +203,11 @@ class DexPage extends HTMLElement {
     }
 
     applyFilters(filter_configs) {
-        // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs. Group name is used for display
+        // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
-            acc[data.group] ??= {}
-            const obj = (acc[data.group][data.id] ??= { funcs: data.funcs })
-            const list = (obj.values ??= [])
+            const list = (acc[data.id] ??= [])
+            list.push(data)
 
-            list.push(data.value)
             return acc
         }, {})
 
@@ -208,14 +217,12 @@ class DexPage extends HTMLElement {
                 .generator((gen_key, gen_value) => {
                     if (grouped_filters.length == 0) return true
 
-                    for (const groupedFilter of Object.entries(grouped_filters)) {
-                        for (const filter of Object.values(groupedFilter[1])) {
-                            const filter_values = filter.values
-                            const filtering_func = filter.funcs[ft.func_id]
+                    for (const grouped_filter of Object.values(grouped_filters)) {
+                        const filter_values = grouped_filter.map((x) => x.value)
+                        const filtering_func = grouped_filter[0].funcs[ft.func_id]
 
-                            if (filtering_func == undefined) continue
-                            if (!filtering_func(gen_key, gen_value, filter_values)) return false
-                        }
+                        if (filtering_func == undefined) continue
+                        if (!filtering_func(gen_key, gen_value, filter_values)) return false
                     }
 
                     return true
@@ -228,7 +235,7 @@ class DexPage extends HTMLElement {
         this.applied_filters_list.replaceChildren(
             ...Object.entries(grouped_filters).map((kv) => {
                 const filter_group_display = new FilterGroupDisplay()
-                filter_group_display.setup(kv[0], kv[1])
+                filter_group_display.setup(kv[0], kv[1], (filter_config) => this.removeFilter(filter_config))
 
                 return filter_group_display
             }),
@@ -242,16 +249,18 @@ class DexPage extends HTMLElement {
         this.getElementById(filter_opt.id).active = true
 
         filter_opt.in_progress_form = filter_opt.in_progress_form ?? filter_opt.new_form_func()
-        filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
+        filter_opt.in_progress_form.onChange = () => this.applyAllFiltering()
 
         this.current_filter_opt = filter_opt
         this.filter_form.replaceChildren(filter_opt.in_progress_form)
-        this.inProgressFilterHasChanges()
+        this.applyAllFiltering()
     }
 
-    inProgressFilterHasChanges() {
-        const filters = this.current_filter_opt.in_progress_form.getFilters()
-        this.applyFilters([...this.applied_filters, ...filters])
+    applyAllFiltering() {
+        const in_progress_filters = this.current_filter_opt.in_progress_form.getFilters()
+        in_progress_filters.forEach((x) => (x.in_progress = true))
+
+        this.applyFilters([...this.applied_filters, ...in_progress_filters])
     }
 
     addCurrentFilter() {
@@ -259,9 +268,14 @@ class DexPage extends HTMLElement {
         this.applyFilters(this.applied_filters)
 
         this.current_filter_opt.in_progress_form = this.current_filter_opt.new_form_func()
-        this.current_filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
+        this.current_filter_opt.in_progress_form.onChange = () => this.applyAllFiltering()
 
         this.filter_form.replaceChildren(this.current_filter_opt.in_progress_form)
+    }
+
+    removeFilter(filter_config) {
+        this.applied_filters = this.applied_filters.filter((x) => x !== filter_config)
+        this.applyAllFiltering()
     }
 }
 customElements.define('party-dex-page', DexPage)
@@ -334,10 +348,10 @@ class Dropdown extends HTMLElement {
 customElements.define('party-drop-down', Dropdown)
 
 class FilterConfig {
-    constructor(id, group, value) {
+    constructor(id, value) {
         this.id = id
-        this.group = group
         this.value = value
+        this.in_progress = false
         this.funcs = {} // Filter funcs always indicate the value passes the filter (return true)
     }
 
@@ -428,4 +442,28 @@ function globalIsLegend(pokemon_id) {
 function globalIsStarter(pokemon_id) {
     return local_data.starters.has(local_data.evolution_roots[pokemon_id])
 }
+
+class Capsule extends HTMLElement {
+    static get observedAttributes() {
+        return ['removable']
+    }
+
+    constructor() {
+        super()
+        setupElement(this, 'party-capsule-template')
+
+        this.text_display = this.getElementById('text_display')
+    }
+
+    setup(text, data, on_remove_callback = null) {
+        this.text_display.innerHTML = text
+        this.data = data
+
+        if (on_remove_callback !== null) {
+            this.setAttribute('removable', '')
+            this.onclick = () => on_remove_callback(this.data)
+        }
+    }
+}
+customElements.define('party-capsule', Capsule)
 

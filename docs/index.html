@@ -13,9 +13,66 @@
     </body>
 
 <template id="party-filter-group-display-template">
-    <style></style>
-    <div id="header_div"></div>
-    <div id="data_div"></div>
+    <style>
+        .card {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            background-color: #69a3d0;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 3px 3px 5px #00000022;
+            padding: 3px;
+            margin: 5px;
+            width: fit-content;
+        }
+    </style>
+    <div class="card">
+        <div id="header_div" style="font-size: 20px"></div>
+        <div id="data_div" style="display: flex; gap: 3px; flex-wrap: wrap"></div>
+    </div>
+</template>
+
+<template id="party-capsule-template">
+    <style>
+        :host {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 2px solid #38393b;
+            color: #38393b;
+            background-color: #a6c5e1;
+            padding: 0px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: fit-content;
+            transition: color 0.2s;
+        }
+
+        :host([removable]:hover) {
+            color: #e8eadd;
+        }
+
+        :host([removable]) {
+            cursor: pointer;
+        }
+
+        .delete-button {
+            display: none;
+            padding: 0;
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        :host([removable]) .delete-button {
+            display: inline-flex;
+        }
+    </style>
+
+    <span id="delete_button" class="delete-button" aria-label="Remove text">🗙</span>
+    <span id="text_display"></span>
 </template>
 
 <template id="party-loading-splash-template">
@@ -60,7 +117,8 @@
         .filterCard {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
-            box-shadow: 3px 3px 5px #00000022;
+            box-shadow: 3px 3px 5px hwb(0 0% 100% / 0.133);
+            background-color: #4d5d69;
             padding: 3px;
             margin: 5px;
             width: 50%;
@@ -112,8 +170,8 @@
             <option value="Single">Single</option>
         </select>
     </label>
-    <label>Hide Legendaries<input type="checkbox" id="hide_legendary_checkbox" /></label>
-    <label>Starters Only<input type="checkbox" id="starter_only_checkbox" /></label>
+    <label style="cursor: pointer">Hide Legendaries<input type="checkbox" id="hide_legendary_checkbox" /></label>
+    <label style="cursor: pointer">Starters Only<input type="checkbox" id="starter_only_checkbox" /></label>
     <party-drop-down id="search_dropdown" placeholder="Enter a Pokémon"></party-drop-down>
 </template>
 
@@ -136,9 +194,13 @@
             padding-left: 8px;
             padding-right: 3px;
             padding-bottom: 3px;
+            transition: border 0.2s;
         }
         :host([active]) {
             border-bottom-color: #e8eadd;
+        }
+        :host(:not([active]):hover) {
+            border-bottom: 3px solid #69a3d0;
         }
     </style>
     <span id="header"><slot></slot></span>

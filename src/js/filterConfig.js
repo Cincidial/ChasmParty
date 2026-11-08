@@ -1,8 +1,8 @@
 class FilterConfig {
-    constructor(id, group, value) {
+    constructor(id, value) {
         this.id = id
-        this.group = group
         this.value = value
+        this.in_progress = false
         this.funcs = {} // Filter funcs always indicate the value passes the filter (return true)
     }
 

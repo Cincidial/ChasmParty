@@ -28,8 +28,8 @@
 
 .button {
     border: 2px solid #38393b;
-    color: #e8eadd;
-    background-color: #69a3d0;
+    color: #38393b;
+    background-color: #a6c5e1;
     padding: 4px 8px;
     border-radius: 8px;
     text-align: center;
@@ -38,4 +38,9 @@
     font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
+    transition: color 0.2s;
+}
+
+.button:hover {
+    color: #e8eadd;
 }

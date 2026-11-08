@@ -7,9 +7,13 @@
             padding-left: 8px;
             padding-right: 3px;
             padding-bottom: 3px;
+            transition: border 0.2s;
         }
         :host([active]) {
             border-bottom-color: #e8eadd;
+        }
+        :host(:not([active]):hover) {
+            border-bottom: 3px solid #69a3d0;
         }
     </style>
     <span id="header"><slot></slot></span>

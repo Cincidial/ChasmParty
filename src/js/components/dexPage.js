@@ -36,13 +36,11 @@ class DexPage extends HTMLElement {
     }
 
     applyFilters(filter_configs) {
-        // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs. Group name is used for display
+        // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
-            acc[data.group] ??= {}
-            const obj = (acc[data.group][data.id] ??= { funcs: data.funcs })
-            const list = (obj.values ??= [])
+            const list = (acc[data.id] ??= [])
+            list.push(data)
 
-            list.push(data.value)
             return acc
         }, {})
 
@@ -52,14 +50,12 @@ class DexPage extends HTMLElement {
                 .generator((gen_key, gen_value) => {
                     if (grouped_filters.length == 0) return true
 
-                    for (const groupedFilter of Object.entries(grouped_filters)) {
-                        for (const filter of Object.values(groupedFilter[1])) {
-                            const filter_values = filter.values
-                            const filtering_func = filter.funcs[ft.func_id]
+                    for (const grouped_filter of Object.values(grouped_filters)) {
+                        const filter_values = grouped_filter.map((x) => x.value)
+                        const filtering_func = grouped_filter[0].funcs[ft.func_id]
 
-                            if (filtering_func == undefined) continue
-                            if (!filtering_func(gen_key, gen_value, filter_values)) return false
-                        }
+                        if (filtering_func == undefined) continue
+                        if (!filtering_func(gen_key, gen_value, filter_values)) return false
                     }
 
                     return true
@@ -72,7 +68,7 @@ class DexPage extends HTMLElement {
         this.applied_filters_list.replaceChildren(
             ...Object.entries(grouped_filters).map((kv) => {
                 const filter_group_display = new FilterGroupDisplay()
-                filter_group_display.setup(kv[0], kv[1])
+                filter_group_display.setup(kv[0], kv[1], (filter_config) => this.removeFilter(filter_config))
 
                 return filter_group_display
             }),
@@ -86,16 +82,18 @@ class DexPage extends HTMLElement {
         this.getElementById(filter_opt.id).active = true
 
         filter_opt.in_progress_form = filter_opt.in_progress_form ?? filter_opt.new_form_func()
-        filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
+        filter_opt.in_progress_form.onChange = () => this.applyAllFiltering()
 
         this.current_filter_opt = filter_opt
         this.filter_form.replaceChildren(filter_opt.in_progress_form)
-        this.inProgressFilterHasChanges()
+        this.applyAllFiltering()
     }
 
-    inProgressFilterHasChanges() {
-        const filters = this.current_filter_opt.in_progress_form.getFilters()
-        this.applyFilters([...this.applied_filters, ...filters])
+    applyAllFiltering() {
+        const in_progress_filters = this.current_filter_opt.in_progress_form.getFilters()
+        in_progress_filters.forEach((x) => (x.in_progress = true))
+
+        this.applyFilters([...this.applied_filters, ...in_progress_filters])
     }
 
     addCurrentFilter() {
@@ -103,9 +101,14 @@ class DexPage extends HTMLElement {
         this.applyFilters(this.applied_filters)
 
         this.current_filter_opt.in_progress_form = this.current_filter_opt.new_form_func()
-        this.current_filter_opt.in_progress_form.onChange = () => this.inProgressFilterHasChanges()
+        this.current_filter_opt.in_progress_form.onChange = () => this.applyAllFiltering()
 
         this.filter_form.replaceChildren(this.current_filter_opt.in_progress_form)
+    }
+
+    removeFilter(filter_config) {
+        this.applied_filters = this.applied_filters.filter((x) => x !== filter_config)
+        this.applyAllFiltering()
     }
 }
 customElements.define('party-dex-page', DexPage)

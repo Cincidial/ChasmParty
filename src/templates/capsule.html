@@ -1,0 +1,40 @@
+<template id="party-capsule-template">
+    <style>
+        :host {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 2px solid #38393b;
+            color: #38393b;
+            background-color: #a6c5e1;
+            padding: 0px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: fit-content;
+            transition: color 0.2s;
+        }
+
+        :host([removable]:hover) {
+            color: #e8eadd;
+        }
+
+        :host([removable]) {
+            cursor: pointer;
+        }
+
+        .delete-button {
+            display: none;
+            padding: 0;
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        :host([removable]) .delete-button {
+            display: inline-flex;
+        }
+    </style>
+
+    <span id="delete_button" class="delete-button" aria-label="Remove text">🗙</span>
+    <span id="text_display"></span>
+</template>
