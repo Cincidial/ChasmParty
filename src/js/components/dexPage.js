@@ -1,8 +1,8 @@
 class FilterTarget {
-    constructor(div, func_id, generator) {
+    constructor(div, func_id, data) {
         this.div = div
         this.func_id = func_id
-        this.generator = generator
+        this.data = data
     }
 }
 
@@ -23,7 +23,7 @@ class DexPage extends HTMLElement {
             { id: 'filter_option_ability', new_form_func: () => new AbilityFilterForm(), in_progress_form: null },
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
-        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, globalGetPokemon)]
+        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, Object.values(pbs_data.pokemon))]
 
         this.current_filter_opt = null
         this.applied_filters = []
@@ -46,8 +46,8 @@ class DexPage extends HTMLElement {
 
         this.filter_targets.forEach((ft) => ft.div.replaceChildren())
         this.filter_targets.forEach((ft) => {
-            const imgs = ft
-                .generator((gen_key, gen_value) => {
+            const imgs = ft.data
+                .filter((d) => {
                     if (grouped_filters.length == 0) return true
 
                     for (const grouped_filter of Object.values(grouped_filters)) {
@@ -55,12 +55,12 @@ class DexPage extends HTMLElement {
                         const filtering_func = grouped_filter[0].funcs[ft.func_id]
 
                         if (filtering_func == undefined) continue
-                        if (!filtering_func(gen_key, gen_value, filter_values)) return false
+                        if (!filtering_func(d, filter_values)) return false
                     }
 
                     return true
                 })
-                .map((kv) => getPokemonIconImg(kv[0]))
+                .map((x) => getPokemonIconImg(x._ID))
 
             ft.div.append(...imgs)
         })
@@ -82,7 +82,7 @@ class DexPage extends HTMLElement {
         this.getElementById(filter_opt.id).active = true
 
         filter_opt.in_progress_form = filter_opt.in_progress_form ?? filter_opt.new_form_func()
-        filter_opt.in_progress_form.onChange = () => this.applyAllFiltering()
+        filter_opt.in_progress_form.on_change = () => this.applyAllFiltering()
 
         this.current_filter_opt = filter_opt
         this.filter_form.replaceChildren(filter_opt.in_progress_form)
@@ -101,7 +101,7 @@ class DexPage extends HTMLElement {
         this.applyFilters(this.applied_filters)
 
         this.current_filter_opt.in_progress_form = this.current_filter_opt.new_form_func()
-        this.current_filter_opt.in_progress_form.onChange = () => this.applyAllFiltering()
+        this.current_filter_opt.in_progress_form.on_change = () => this.applyAllFiltering()
 
         this.filter_form.replaceChildren(this.current_filter_opt.in_progress_form)
     }

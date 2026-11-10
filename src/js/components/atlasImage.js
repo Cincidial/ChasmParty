@@ -15,15 +15,19 @@ function getAtlasImg(x, y, w, h, filename) {
 }
 
 function getPokemonIconImg(id) {
-    const w = server_data.Atlas.SpriteAtlas.Icon.w
-    const h = server_data.Atlas.SpriteAtlas.Icon.h
-    const data = server_data.Atlas.SpriteAtlas.Icon[id]
-    return getAtlasImg(data.x, data.y, w, h, server_data.Atlas.SpriteAtlas.Artifact)
+    const w = sprite_atlas_data.Icon.w
+    const h = sprite_atlas_data.Icon.h
+    const data = sprite_atlas_data.Icon[id]
+
+    // TODO: Show missing icon if data is not found
+    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_data.Artifact)
 }
 
 function getPokemonFrontImg(id) {
-    const w = server_data.Atlas.SpriteAtlas.Front.w
-    const h = server_data.Atlas.SpriteAtlas.Front.h
-    const data = server_data.Atlas.SpriteAtlas.Front[id]
-    return getAtlasImg(data.x, data.y, w, h, server_data.Atlas.SpriteAtlas.Artifact)
+    const w = sprite_atlas_data.Front.w
+    const h = sprite_atlas_data.Front.h
+    const data = sprite_atlas_data.Front[id]
+
+    // TODO: Show missing icon if data is not found
+    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_data.Artifact)
 }

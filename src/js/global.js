@@ -1,16 +1,49 @@
 document.addEventListener('DOMContentLoaded', () => getServerData())
 
-var server_data
 var sprite_atlas_img
-var local_data = {}
+var sprite_atlas_data = {}
+var rx_data = {}
+var pbs_data = {}
 
 async function getServerData() {
     const loadingSplash = document.getElementById('loadingSplash')
 
+    function convertPbsDataListToHash(data) {
+        return Object.fromEntries(data.map((x) => [x._ID, x]))
+    }
+
     async function handleData() {
         const response = await fetch('data.json')
-        server_data = await response.json()
-        globalBuildLocalData()
+        const server_data = await response.json()
+
+        sprite_atlas_data = server_data.Atlas.SpriteAtlas
+        rx_data = server_data.RxData
+
+        // Build all the PBS data classes
+        pbs_data.generations = [...new Set(Object.values(server_data.PBS.Pokemon).map((x) => x.Generation))].filter((x) => x).sort()
+        pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map((kv) => new PbsPokemon(kv[0], kv[1])))
+        pbs_data.abilities = convertPbsDataListToHash(Object.entries(server_data.PBS.Abilities).map((kv) => new PbsAbility(kv[0], kv[1])))
+
+        // Post-Processing
+        const evolutions_to_process = Object.values(pbs_data.pokemon).filter((x) => x.root_evolution)
+        while (evolutions_to_process.length > 0) {
+            const mon = evolutions_to_process.pop()
+            if (mon._Data.Evolutions) {
+                mon._Data.Evolutions.forEach((evo) => {
+                    pbs_data.pokemon[evo.Pokemon].root_evolution = mon.root_evolution
+                    evolutions_to_process.push(pbs_data.pokemon[evo.Pokemon])
+                })
+            }
+        }
+
+        const starters = new Set(
+            Object.values(server_data.PBS.Encounters)
+                .filter((x) => x.Name.includes('Starter'))
+                .flatMap((x) => x.Tables[0].Encounters.map((y) => y.Pokemon)),
+        )
+        Object.values(pbs_data.pokemon)
+            .filter((x) => starters.has(x.root_evolution._ID))
+            .forEach((x) => (x.is_starter = true))
     }
 
     try {
@@ -34,52 +67,9 @@ async function getServerData() {
     }
 }
 
-function globalBuildLocalData() {
-    local_data.generations = [...new Set(Object.values(server_data.PBS.Pokemon).map((x) => x.Generation))].filter((x) => x).sort()
-    local_data.starters = new Set(
-        Object.values(server_data.PBS.Encounters)
-            .filter((x) => x.Name.includes('Starter'))
-            .flatMap((x) => x.Tables[0].Encounters.map((y) => y.Pokemon)),
-    )
-
-    local_data.evolution_roots = Object.fromEntries(
-        Object.entries(server_data.PBS.Pokemon)
-            .filter((kv) => kv[1].Prevo == undefined)
-            .map((kv) => [kv[0], kv[0]]),
-    )
-    const evolutions_to_process = Object.keys(local_data.evolution_roots)
-    while (evolutions_to_process.length > 0) {
-        const processing_mon_key = evolutions_to_process.pop()
-        const root = local_data.evolution_roots[processing_mon_key]
-        const mon = server_data.PBS.Pokemon[processing_mon_key]
-
-        if (mon.Evolutions) {
-            mon.Evolutions.forEach((evo) => {
-                local_data.evolution_roots[evo.Pokemon] = root
-                evolutions_to_process.push(evo.Pokemon)
-            })
-        }
-    }
-}
-
-function globalGetPokemon(filter) {
-    const pokemon = Object.entries(server_data.PBS.Pokemon)
-    return filter ? pokemon.filter((kv) => filter(kv[0], kv[1])) : pokemon
-}
-
-function globalGetAbilities(filter) {
-    const abilities = Object.entries(server_data.PBS.Abilities)
-    return filter ? abilities.filter((kv) => filter(kv[0], kv[1])) : abilities
-}
-
-function globalGetAbilitiesById(ids) {
-    return ids.map((x) => server_data.PBS.Abilities[x])
-}
-
-function globalIsLegend(pokemon_id) {
-    return server_data.PBS.Pokemon[pokemon_id].Flags?.some((x) => x == 'Legendary') ?? false
-}
-
-function globalIsStarter(pokemon_id) {
-    return local_data.starters.has(local_data.evolution_roots[pokemon_id])
+function setPbsBaseMembers(self, k, v) {
+    // No a base class cannot be used because the build script might not put the base class first in src.js
+    // Yes, this is very janky, but so is writing this website in pure JS
+    self._ID = k
+    self._Data = v
 }

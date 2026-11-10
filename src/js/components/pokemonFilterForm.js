@@ -5,7 +5,7 @@ class PokemonFilterForm extends HTMLElement {
 
         this.generation_select = this.getElementById('generation_select')
         this.generation_select.replaceChildren(
-            ...['Any', ...local_data.generations].map((gen) => {
+            ...['Any', ...pbs_data.generations].map((gen) => {
                 var element = document.createElement('option')
                 element.value = gen
                 element.innerHTML = gen
@@ -19,10 +19,10 @@ class PokemonFilterForm extends HTMLElement {
         this.starter_only_checkbox = this.getElementById('starter_only_checkbox')
         this.search_dropdown = this.getElementById('search_dropdown')
 
-        this.search_dropdown.populate(globalGetPokemon().map((kv) => kv[1].Name))
+        this.search_dropdown.populate(Object.values(pbs_data.pokemon).map((x) => x._Data.Name))
     }
 
-    set onChange(func) {
+    set on_change(func) {
         this.generation_select.onchange = func
         this.evolution_select.onchange = func
         this.only_legendary_checkbox.onchange = func
@@ -35,18 +35,16 @@ class PokemonFilterForm extends HTMLElement {
         const filters = []
         if (this.generation_select.value != 'Any') {
             filters.push(
-                new FilterConfig('Generation', this.generation_select.value).setMonFunc((gen_key, gen_value, filter_values) =>
-                    filter_values.includes(`${gen_value.Generation ?? -1}`),
-                ),
+                new FilterConfig('Generation', this.generation_select.value).setMonFunc((d, fv) => fv.includes(`${d._Data.Generation ?? -1}`)),
             )
         }
 
         if (this.evolution_select.value != 'Any') {
             filters.push(
-                new FilterConfig('Evolution', this.evolution_select.value).setMonFunc((gen_key, gen_value, filter_values) => {
-                    if (filter_values.includes('First') && gen_value.Prevo == undefined && gen_value.Evolutions) return true
-                    if (filter_values.includes('Final') && gen_value.Prevo && gen_value.Evolutions == undefined) return true
-                    if (filter_values.includes('Single') && gen_value.Prevo == undefined && gen_value.Evolutions == undefined) return true
+                new FilterConfig('Evolution', this.evolution_select.value).setMonFunc((d, fv) => {
+                    if (fv.includes('First') && d.is_first_stage) return true
+                    if (fv.includes('Final') && d.is_final_stage) return true
+                    if (fv.includes('Single') && d.has_no_evo_line) return true
 
                     return false
                 }),
@@ -54,33 +52,21 @@ class PokemonFilterForm extends HTMLElement {
         }
 
         if (this.only_legendary_checkbox.checked) {
-            filters.push(
-                new FilterConfig('Only Legends', true).setMonFunc(
-                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsLegend(gen_key),
-                ),
-            )
+            filters.push(new FilterConfig('Only Legends', true).setMonFunc((d, fv) => fv.includes(true) && d.is_legend))
         }
 
         if (this.hide_legendary_checkbox.checked) {
-            filters.push(
-                new FilterConfig('Hide Legends', true).setMonFunc(
-                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && !globalIsLegend(gen_key),
-                ),
-            )
+            filters.push(new FilterConfig('Hide Legends', true).setMonFunc((d, fv) => fv.includes(true) && !d.is_legend))
         }
 
         if (this.starter_only_checkbox.checked) {
-            filters.push(
-                new FilterConfig('Starters Only', true).setMonFunc(
-                    (gen_key, gen_value, filter_values) => filter_values.includes(true) && globalIsStarter(gen_key),
-                ),
-            )
+            filters.push(new FilterConfig('Starters Only', true).setMonFunc((d, fv) => fv.includes(true) && d.is_starter))
         }
 
         if (this.search_dropdown.value) {
             filters.push(
-                new FilterConfig('Pokemon Search', this.search_dropdown.value).setMonFunc((gen_key, gen_value, filter_values) =>
-                    filter_values.some((x) => gen_value.Name.toLowerCase().includes(x.toLowerCase())),
+                new FilterConfig('Pokemon Search', this.search_dropdown.value).setMonFunc((d, fv) =>
+                    fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase())),
                 ),
             )
         }
