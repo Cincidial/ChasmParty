@@ -34,15 +34,28 @@ class PokemonFilterForm extends HTMLElement {
     getFilters() {
         const filters = []
         if (this.generation_select.value != 'Any') {
-            filters.push(new FilterConfig('Generation', this.generation_select.value, (d, fv) => fv.includes(`${d._Data.Generation ?? -1}`)))
+            filters.push(
+                new FilterConfig('Generation', this.generation_select.value, (d, fv) => {
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            return fv.includes(`${d._Data.Generation ?? -1}`)
+                    }
+
+                    return false
+                }),
+            )
         }
 
         if (this.evolution_select.value != 'Any') {
             filters.push(
                 new FilterConfig('Evolution', this.evolution_select.value, (d, fv) => {
-                    if (fv.includes('First') && d.is_first_stage) return true
-                    if (fv.includes('Final') && d.is_final_stage) return true
-                    if (fv.includes('Single') && d.has_no_evo_line) return true
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            if (fv.includes('First') && d.is_first_stage) return true
+                            if (fv.includes('Final') && d.is_final_stage) return true
+                            if (fv.includes('Single') && d.has_no_evo_line) return true
+                            break
+                    }
 
                     return false
                 }),
@@ -50,22 +63,51 @@ class PokemonFilterForm extends HTMLElement {
         }
 
         if (this.only_legendary_checkbox.checked) {
-            filters.push(new FilterConfig('Only Legends', true, (d, fv) => fv.includes(true) && d.is_legend))
+            filters.push(
+                new FilterConfig('Only Legends', true, (d, fv) => {
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            return fv.includes(true) && d.is_legend
+                    }
+                    return false
+                }),
+            )
         }
 
         if (this.hide_legendary_checkbox.checked) {
-            filters.push(new FilterConfig('Hide Legends', true, (d, fv) => fv.includes(true) && !d.is_legend))
+            filters.push(
+                new FilterConfig('Hide Legends', true, (d, fv) => {
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            return fv.includes(true) && !d.is_legend
+                    }
+
+                    return false
+                }),
+            )
         }
 
         if (this.starter_only_checkbox.checked) {
-            filters.push(new FilterConfig('Starters Only', true, (d, fv) => fv.includes(true) && d.is_starter))
+            filters.push(
+                new FilterConfig('Starters Only', true, (d, fv) => {
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            return fv.includes(true) && d.is_starter
+                    }
+                    return false
+                }),
+            )
         }
 
         if (this.search_dropdown.value) {
             filters.push(
-                new FilterConfig('Pokemon Search', this.search_dropdown.value, (d, fv) =>
-                    fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase())),
-                ),
+                new FilterConfig('Pokemon Search', this.search_dropdown.value, (d, fv) => {
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
+                    }
+                    return false
+                }),
             )
         }
 
@@ -103,14 +145,26 @@ class AbilityFilterForm extends HTMLElement {
     getFilters() {
         const filters = []
         if (this.is_primival_checkbox.checked) {
-            filters.push(new FilterConfig('Primeval Ability', true, (d, fv) => fv.includes(true) && d.abilities.some((x) => x._Data.IsPrimeval)))
+            filters.push(
+                new FilterConfig('Primeval Ability', true, (d, fv) => {
+                    switch (d.constructor) {
+                        case PbsAbility:
+                            return fv.includes(true) && d._Data.IsPrimeval
+                    }
+                    return false
+                }),
+            )
         }
 
         if (this.name_dropdown.value) {
             filters.push(
                 new FilterConfig('Abilty Name', this.name_dropdown.value, (d, fv) => {
-                    const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
-                    return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
+                            return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                    }
+                    return false
                 }),
             )
         }
@@ -118,8 +172,12 @@ class AbilityFilterForm extends HTMLElement {
         if (this.desc_input.value) {
             filters.push(
                 new FilterConfig('Ability Description', this.desc_input.value, (d, fv) => {
-                    const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
-                    return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                    switch (d.constructor) {
+                        case PbsPokemon:
+                            const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
+                            return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                    }
+                    return false
                 }),
             )
         }
