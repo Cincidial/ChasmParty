@@ -148,13 +148,11 @@
     </div>
     <div
         id="filtered_data_targets_checkboxes_list"
-        class="filterCard"
         style="min-height: fit-content; width: fit-content; height: fit-content; margin-right: auto; margin-left: auto; padding: 10px"
     >
-        Display:
-        <label style="cursor: pointer">Pokémon<input type="checkbox" id="filter_show_pokemon_checkbox" checked="true" /></label>
-        <label style="cursor: pointer">Abilities<input type="checkbox" id="filter_show_abilities_checkbox" /></label>
-        <label style="cursor: pointer">Moves<input type="checkbox" id="filter_show_moves_checkbox" /></label>
+        <party-filter-option id="filter_show_pokemon" key="pokemon">Pokémon</party-filter-option>
+        <party-filter-option id="filter_show_abilities" key="abilities">Abilities</party-filter-option>
+        <party-filter-option id="filter_show_moves" key="moves">Moves</party-filter-option>
     </div>
     <div id="filtered_data_list" class="filteredList"></div>
 </template>

@@ -1,7 +1,7 @@
 class FilterTarget {
     constructor(checkbox_id, data, gen_element_func) {
-        this.checkbox_id = checkbox_id
-        this.checkbox_element = null
+        this.option_id = checkbox_id
+        this.option_element = null
         this.data = data
         this.gen_element_func = gen_element_func
     }
@@ -23,26 +23,34 @@ class DexPage extends HTMLElement {
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
         this.filter_targets = [
-            new FilterTarget('filter_show_pokemon_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
-            new FilterTarget('filter_show_abilities_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
-            new FilterTarget('filter_show_moves_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
+            new FilterTarget('filter_show_pokemon', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
+            new FilterTarget('filter_show_abilities', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
+            new FilterTarget('filter_show_moves', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
         ]
 
         this.current_filter_opt = null
+        this.current_filter_target = this.filter_targets[0]
         this.applied_filters = []
 
         this.add_filter_button.onclick = () => this.addCurrentFilter()
         this.filter_options.forEach((opt) => (this.getElementById(opt.id).onclick = (_) => this.setFilterForm(opt)))
         this.filter_targets.forEach((ft) => {
-            ft.checkbox_element = this.getElementById(ft.checkbox_id)
-            ft.checkbox_element.onchange = () => this.applyAllFiltering()
+            ft.option_element = this.getElementById(ft.option_id)
+            ft.option_element.onclick = () => {
+                this.current_filter_target.option_element.active = false
+                this.current_filter_target = ft
+                ft.option_element.active = true
+
+                this.applyAllFiltering()
+            }
         })
 
-        this.applyFilters([])
+        this.current_filter_target.option_element.active = true
+        this.applyFilters(this.current_filter_target, [])
         this.setFilterForm(this.filter_options[0])
     }
 
-    applyFilters(filter_configs) {
+    applyFilters(filter_target, filter_configs) {
         // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
             const list = (acc[data.id] ??= [])
@@ -52,22 +60,18 @@ class DexPage extends HTMLElement {
         }, {})
 
         this.filtered_data_list.replaceChildren(
-            ...this.filter_targets
-                .filter((ft) => ft.checkbox_element.checked)
-                .flatMap((ft) =>
-                    ft.data
-                        .filter((d) => {
-                            if (grouped_filters.length == 0) return true
+            ...filter_target.data
+                .filter((d) => {
+                    if (grouped_filters.length == 0) return true
 
-                            for (const grouped_filter of Object.values(grouped_filters)) {
-                                const fv = grouped_filter.map((x) => x.value)
-                                if (!grouped_filter[0].filter_func(d, fv)) return false
-                            }
+                    for (const grouped_filter of Object.values(grouped_filters)) {
+                        const fv = grouped_filter.map((x) => x.value)
+                        if (!grouped_filter[0].filter_func(d, fv)) return false
+                    }
 
-                            return true
-                        })
-                        .map((x) => ft.gen_element_func(x)),
-                ),
+                    return true
+                })
+                .map((x) => filter_target.gen_element_func(x)),
         )
 
         this.applied_filters_list.replaceChildren(
@@ -98,12 +102,12 @@ class DexPage extends HTMLElement {
         const in_progress_filters = this.current_filter_opt.in_progress_form.getFilters()
         in_progress_filters.forEach((x) => (x.in_progress = true))
 
-        this.applyFilters([...this.applied_filters, ...in_progress_filters])
+        this.applyFilters(this.current_filter_target, [...this.applied_filters, ...in_progress_filters])
     }
 
     addCurrentFilter() {
         this.applied_filters.push(...this.current_filter_opt.in_progress_form.getFilters())
-        this.applyFilters(this.applied_filters)
+        this.applyFilters(this.current_filter_target, this.applied_filters)
 
         this.current_filter_opt.in_progress_form = this.current_filter_opt.new_form_func()
         this.current_filter_opt.in_progress_form.on_change = () => this.applyAllFiltering()
