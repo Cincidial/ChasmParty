@@ -19,14 +19,12 @@ class AbilityFilterForm extends HTMLElement {
     getFilters() {
         const filters = []
         if (this.is_primival_checkbox.checked) {
-            filters.push(
-                new FilterConfig('Primeval Ability', true).setMonFunc((d, fv) => fv.includes(true) && d.abilities.some((x) => x._Data.IsPrimeval)),
-            )
+            filters.push(new FilterConfig('Primeval Ability', true, (d, fv) => fv.includes(true) && d.abilities.some((x) => x._Data.IsPrimeval)))
         }
 
         if (this.name_dropdown.value) {
             filters.push(
-                new FilterConfig('Abilty Name', this.name_dropdown.value).setMonFunc((d, fv) => {
+                new FilterConfig('Abilty Name', this.name_dropdown.value, (d, fv) => {
                     const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
                     return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
                 }),
@@ -35,7 +33,7 @@ class AbilityFilterForm extends HTMLElement {
 
         if (this.desc_input.value) {
             filters.push(
-                new FilterConfig('Ability Description', this.desc_input.value).setMonFunc((d, fv) => {
+                new FilterConfig('Ability Description', this.desc_input.value, (d, fv) => {
                     const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
                     return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
                 }),

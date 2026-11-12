@@ -1,14 +1,12 @@
 class FilterTarget {
-    constructor(div, func_id, data) {
-        this.div = div
-        this.func_id = func_id
+    constructor(checkbox, data, gen_element_func) {
+        this.checkbox = checkbox
         this.data = data
+        this.gen_element_func = gen_element_func
     }
 }
 
 class DexPage extends HTMLElement {
-    static FILTER_FUNC_POKEMON = 'filter_func_pokemon'
-
     constructor() {
         super()
         setupElement(this, 'party-dex-page-template')
@@ -16,14 +14,14 @@ class DexPage extends HTMLElement {
         this.add_filter_button = this.getElementById('add_filter_button')
         this.filter_form = this.getElementById('filter_form')
         this.applied_filters_list = this.getElementById('applied_filters_list')
-        this.pokemon_list = this.getElementById('pokemon_list')
+        this.filtered_data_list = this.getElementById('filtered_data_list')
 
         this.filter_options = [
             { id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
             { id: 'filter_option_ability', new_form_func: () => new AbilityFilterForm(), in_progress_form: null },
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
-        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, Object.values(pbs_data.pokemon))]
+        this.filter_targets = [new FilterTarget('filter_show_pokemon_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID))]
 
         this.current_filter_opt = null
         this.applied_filters = []
@@ -44,26 +42,22 @@ class DexPage extends HTMLElement {
             return acc
         }, {})
 
-        this.filter_targets.forEach((ft) => ft.div.replaceChildren())
-        this.filter_targets.forEach((ft) => {
-            const imgs = ft.data
-                .filter((d) => {
-                    if (grouped_filters.length == 0) return true
+        this.filtered_data_list.replaceChildren(
+            ...this.filter_targets.flatMap((ft) =>
+                ft.data
+                    .filter((d) => {
+                        if (grouped_filters.length == 0) return true
 
-                    for (const grouped_filter of Object.values(grouped_filters)) {
-                        const filter_values = grouped_filter.map((x) => x.value)
-                        const filtering_func = grouped_filter[0].funcs[ft.func_id]
+                        for (const grouped_filter of Object.values(grouped_filters)) {
+                            const fv = grouped_filter.map((x) => x.value)
+                            if (!grouped_filter[0].filter_func(d, fv)) return false
+                        }
 
-                        if (filtering_func == undefined) continue
-                        if (!filtering_func(d, filter_values)) return false
-                    }
-
-                    return true
-                })
-                .map((x) => getPokemonIconImg(x._ID))
-
-            ft.div.append(...imgs)
-        })
+                        return true
+                    })
+                    .map((x) => ft.gen_element_func(x)),
+            ),
+        )
 
         this.applied_filters_list.replaceChildren(
             ...Object.entries(grouped_filters).map((kv) => {

@@ -34,14 +34,12 @@ class PokemonFilterForm extends HTMLElement {
     getFilters() {
         const filters = []
         if (this.generation_select.value != 'Any') {
-            filters.push(
-                new FilterConfig('Generation', this.generation_select.value).setMonFunc((d, fv) => fv.includes(`${d._Data.Generation ?? -1}`)),
-            )
+            filters.push(new FilterConfig('Generation', this.generation_select.value, (d, fv) => fv.includes(`${d._Data.Generation ?? -1}`)))
         }
 
         if (this.evolution_select.value != 'Any') {
             filters.push(
-                new FilterConfig('Evolution', this.evolution_select.value).setMonFunc((d, fv) => {
+                new FilterConfig('Evolution', this.evolution_select.value, (d, fv) => {
                     if (fv.includes('First') && d.is_first_stage) return true
                     if (fv.includes('Final') && d.is_final_stage) return true
                     if (fv.includes('Single') && d.has_no_evo_line) return true
@@ -52,20 +50,20 @@ class PokemonFilterForm extends HTMLElement {
         }
 
         if (this.only_legendary_checkbox.checked) {
-            filters.push(new FilterConfig('Only Legends', true).setMonFunc((d, fv) => fv.includes(true) && d.is_legend))
+            filters.push(new FilterConfig('Only Legends', true, (d, fv) => fv.includes(true) && d.is_legend))
         }
 
         if (this.hide_legendary_checkbox.checked) {
-            filters.push(new FilterConfig('Hide Legends', true).setMonFunc((d, fv) => fv.includes(true) && !d.is_legend))
+            filters.push(new FilterConfig('Hide Legends', true, (d, fv) => fv.includes(true) && !d.is_legend))
         }
 
         if (this.starter_only_checkbox.checked) {
-            filters.push(new FilterConfig('Starters Only', true).setMonFunc((d, fv) => fv.includes(true) && d.is_starter))
+            filters.push(new FilterConfig('Starters Only', true, (d, fv) => fv.includes(true) && d.is_starter))
         }
 
         if (this.search_dropdown.value) {
             filters.push(
-                new FilterConfig('Pokemon Search', this.search_dropdown.value).setMonFunc((d, fv) =>
+                new FilterConfig('Pokemon Search', this.search_dropdown.value, (d, fv) =>
                     fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase())),
                 ),
             )
@@ -105,14 +103,12 @@ class AbilityFilterForm extends HTMLElement {
     getFilters() {
         const filters = []
         if (this.is_primival_checkbox.checked) {
-            filters.push(
-                new FilterConfig('Primeval Ability', true).setMonFunc((d, fv) => fv.includes(true) && d.abilities.some((x) => x._Data.IsPrimeval)),
-            )
+            filters.push(new FilterConfig('Primeval Ability', true, (d, fv) => fv.includes(true) && d.abilities.some((x) => x._Data.IsPrimeval)))
         }
 
         if (this.name_dropdown.value) {
             filters.push(
-                new FilterConfig('Abilty Name', this.name_dropdown.value).setMonFunc((d, fv) => {
+                new FilterConfig('Abilty Name', this.name_dropdown.value, (d, fv) => {
                     const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
                     return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
                 }),
@@ -121,7 +117,7 @@ class AbilityFilterForm extends HTMLElement {
 
         if (this.desc_input.value) {
             filters.push(
-                new FilterConfig('Ability Description', this.desc_input.value).setMonFunc((d, fv) => {
+                new FilterConfig('Ability Description', this.desc_input.value, (d, fv) => {
                     const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
                     return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
                 }),
@@ -215,16 +211,14 @@ function getPokemonFrontImg(id) {
 }
 
 class FilterTarget {
-    constructor(div, func_id, data) {
-        this.div = div
-        this.func_id = func_id
+    constructor(checkbox, data, gen_element_func) {
+        this.checkbox = checkbox
         this.data = data
+        this.gen_element_func = gen_element_func
     }
 }
 
 class DexPage extends HTMLElement {
-    static FILTER_FUNC_POKEMON = 'filter_func_pokemon'
-
     constructor() {
         super()
         setupElement(this, 'party-dex-page-template')
@@ -232,14 +226,14 @@ class DexPage extends HTMLElement {
         this.add_filter_button = this.getElementById('add_filter_button')
         this.filter_form = this.getElementById('filter_form')
         this.applied_filters_list = this.getElementById('applied_filters_list')
-        this.pokemon_list = this.getElementById('pokemon_list')
+        this.filtered_data_list = this.getElementById('filtered_data_list')
 
         this.filter_options = [
             { id: 'filter_option_pokemon', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
             { id: 'filter_option_ability', new_form_func: () => new AbilityFilterForm(), in_progress_form: null },
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
-        this.filter_targets = [new FilterTarget(this.pokemon_list, DexPage.FILTER_FUNC_POKEMON, Object.values(pbs_data.pokemon))]
+        this.filter_targets = [new FilterTarget('filter_show_pokemon_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID))]
 
         this.current_filter_opt = null
         this.applied_filters = []
@@ -260,26 +254,22 @@ class DexPage extends HTMLElement {
             return acc
         }, {})
 
-        this.filter_targets.forEach((ft) => ft.div.replaceChildren())
-        this.filter_targets.forEach((ft) => {
-            const imgs = ft.data
-                .filter((d) => {
-                    if (grouped_filters.length == 0) return true
+        this.filtered_data_list.replaceChildren(
+            ...this.filter_targets.flatMap((ft) =>
+                ft.data
+                    .filter((d) => {
+                        if (grouped_filters.length == 0) return true
 
-                    for (const grouped_filter of Object.values(grouped_filters)) {
-                        const filter_values = grouped_filter.map((x) => x.value)
-                        const filtering_func = grouped_filter[0].funcs[ft.func_id]
+                        for (const grouped_filter of Object.values(grouped_filters)) {
+                            const fv = grouped_filter.map((x) => x.value)
+                            if (!grouped_filter[0].filter_func(d, fv)) return false
+                        }
 
-                        if (filtering_func == undefined) continue
-                        if (!filtering_func(d, filter_values)) return false
-                    }
-
-                    return true
-                })
-                .map((x) => getPokemonIconImg(x._ID))
-
-            ft.div.append(...imgs)
-        })
+                        return true
+                    })
+                    .map((x) => ft.gen_element_func(x)),
+            ),
+        )
 
         this.applied_filters_list.replaceChildren(
             ...Object.entries(grouped_filters).map((kv) => {
@@ -455,16 +445,11 @@ class PbsAbility {
 }
 
 class FilterConfig {
-    constructor(id, value) {
+    constructor(id, value, filter_func) {
         this.id = id
         this.value = value
         this.in_progress = false
-        this.funcs = {} // Filter funcs always indicate the value passes the filter (return true)
-    }
-
-    setMonFunc(func) {
-        this.funcs[DexPage.FILTER_FUNC_POKEMON] = func
-        return this
+        this.filter_func = filter_func // Filter funcs always indicate the value passes the filter (return true)
     }
 }
 
