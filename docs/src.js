@@ -1,3 +1,21 @@
+class Checkbox extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-checkbox-template')
+
+        this.checkbox = this.getElementById('checkbox')
+    }
+
+    set onchange(func) {
+        this.checkbox.onchange = func
+    }
+
+    get checked() {
+        return this.checkbox.checked
+    }
+}
+customElements.define('party-checkbox', Checkbox)
+
 class PokemonFilterForm extends HTMLElement {
     constructor() {
         super()
@@ -253,18 +271,16 @@ function getAtlasImg(x, y, w, h, filename) {
 function getPokemonIconImg(id) {
     const w = sprite_atlas_data.Icon.w
     const h = sprite_atlas_data.Icon.h
-    const data = sprite_atlas_data.Icon[id]
+    const data = sprite_atlas_data.Icon[id] ?? sprite_atlas_data.Icon['000']
 
-    // TODO: Show missing icon if data is not found
     return getAtlasImg(data.x, data.y, w, h, sprite_atlas_data.Artifact)
 }
 
 function getPokemonFrontImg(id) {
     const w = sprite_atlas_data.Front.w
     const h = sprite_atlas_data.Front.h
-    const data = sprite_atlas_data.Front[id]
+    const data = sprite_atlas_data.Front[id] ?? sprite_atlas_data.Front['000']
 
-    // TODO: Show missing icon if data is not found
     return getAtlasImg(data.x, data.y, w, h, sprite_atlas_data.Artifact)
 }
 
@@ -320,7 +336,7 @@ class DexPage extends HTMLElement {
         this.setFilterForm(this.filter_options[0])
     }
 
-    applyFilters(filter_target, filter_configs) {
+    applyFilters(filter_target, filter_configs, sort) {
         // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
             const list = (acc[data.id] ??= [])
@@ -372,12 +388,12 @@ class DexPage extends HTMLElement {
         const in_progress_filters = this.current_filter_opt.in_progress_form.getFilters()
         in_progress_filters.forEach((x) => (x.in_progress = true))
 
-        this.applyFilters(this.current_filter_target, [...this.applied_filters, ...in_progress_filters])
+        this.applyFilters(this.current_filter_target, [...this.applied_filters, ...in_progress_filters], this.current_filter_opt.sort)
     }
 
     addCurrentFilter() {
         this.applied_filters.push(...this.current_filter_opt.in_progress_form.getFilters())
-        this.applyFilters(this.current_filter_target, this.applied_filters)
+        this.applyFilters(this.current_filter_target, this.applied_filters, this.current_filter_opt.sort)
 
         this.current_filter_opt.in_progress_form = this.current_filter_opt.new_form_func()
         this.current_filter_opt.in_progress_form.on_change = () => this.applyAllFiltering()
