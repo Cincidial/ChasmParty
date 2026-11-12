@@ -1,6 +1,7 @@
 class FilterTarget {
-    constructor(checkbox, data, gen_element_func) {
-        this.checkbox = checkbox
+    constructor(checkbox_id, data, gen_element_func) {
+        this.checkbox_id = checkbox_id
+        this.checkbox_element = null
         this.data = data
         this.gen_element_func = gen_element_func
     }
@@ -21,13 +22,21 @@ class DexPage extends HTMLElement {
             { id: 'filter_option_ability', new_form_func: () => new AbilityFilterForm(), in_progress_form: null },
             { id: 'filter_option_move', new_form_func: () => new PokemonFilterForm(), in_progress_form: null },
         ]
-        this.filter_targets = [new FilterTarget('filter_show_pokemon_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID))]
+        this.filter_targets = [
+            new FilterTarget('filter_show_pokemon_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
+            new FilterTarget('filter_show_abilities_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
+            new FilterTarget('filter_show_moves_checkbox', Object.values(pbs_data.pokemon), (x) => getPokemonIconImg(x._ID)),
+        ]
 
         this.current_filter_opt = null
         this.applied_filters = []
 
         this.add_filter_button.onclick = () => this.addCurrentFilter()
         this.filter_options.forEach((opt) => (this.getElementById(opt.id).onclick = (_) => this.setFilterForm(opt)))
+        this.filter_targets.forEach((ft) => {
+            ft.checkbox_element = this.getElementById(ft.checkbox_id)
+            ft.checkbox_element.onchange = () => this.applyAllFiltering()
+        })
 
         this.applyFilters([])
         this.setFilterForm(this.filter_options[0])
@@ -43,20 +52,22 @@ class DexPage extends HTMLElement {
         }, {})
 
         this.filtered_data_list.replaceChildren(
-            ...this.filter_targets.flatMap((ft) =>
-                ft.data
-                    .filter((d) => {
-                        if (grouped_filters.length == 0) return true
+            ...this.filter_targets
+                .filter((ft) => ft.checkbox_element.checked)
+                .flatMap((ft) =>
+                    ft.data
+                        .filter((d) => {
+                            if (grouped_filters.length == 0) return true
 
-                        for (const grouped_filter of Object.values(grouped_filters)) {
-                            const fv = grouped_filter.map((x) => x.value)
-                            if (!grouped_filter[0].filter_func(d, fv)) return false
-                        }
+                            for (const grouped_filter of Object.values(grouped_filters)) {
+                                const fv = grouped_filter.map((x) => x.value)
+                                if (!grouped_filter[0].filter_func(d, fv)) return false
+                            }
 
-                        return true
-                    })
-                    .map((x) => ft.gen_element_func(x)),
-            ),
+                            return true
+                        })
+                        .map((x) => ft.gen_element_func(x)),
+                ),
         )
 
         this.applied_filters_list.replaceChildren(
