@@ -44,3 +44,7 @@
 .button:hover {
     color: #e8eadd;
 }
+
+input[type='radio'] {
+    cursor: pointer;
+}

@@ -19,7 +19,23 @@
         }
     </style>
 
-    <label style="cursor: pointer"><slot></slot><input type="checkbox" id="checkbox" /></label>
+    <label><slot></slot><input type="checkbox" id="checkbox" /></label>
+</template>
+
+<template id="party-radio-group-template">
+    <style>
+        .layout {
+            display: inline-flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+
+        .radio {
+            cursor: pointer;
+        }
+    </style>
+
+    <div id="container" class="layout"></div>
 </template>
 
 <template id="party-filter-group-display-template">
@@ -124,7 +140,7 @@
 
 <template id="party-dex-page-template">
     <style>
-        .filterCard {
+        .card {
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             box-shadow: 3px 3px 5px hwb(0 0% 100% / 0.133);
@@ -135,7 +151,7 @@
             min-height: 10vh;
         }
 
-        .filteredList {
+        .dataList {
             display: flex;
             flex-wrap: wrap;
             overflow: scroll;
@@ -144,7 +160,7 @@
     </style>
     <h1 style="text-align: center">Pokédex</h1>
     <div style="display: flex; flex-direction: row; overflow: scroll">
-        <div class="filterCard default-dark-accent1">
+        <div class="card default-dark-accent1">
             <div style="margin-bottom: 5px">
                 <span id="add_filter_button" class="button" style="margin-right: 10px">Add Filter</span>
                 <party-filter-option id="filter_option_pokemon" key="pokemon">Pokémon</party-filter-option>
@@ -154,7 +170,7 @@
             <hr style="color: #e8eadd" />
             <div id="filter_form"></div>
         </div>
-        <div id="applied_filters_list" class="filterCard"></div>
+        <div id="applied_filters_list" class="card"></div>
     </div>
     <div
         id="filtered_data_targets_checkboxes_list"
@@ -163,8 +179,12 @@
         <party-filter-option id="filter_show_pokemon" key="pokemon">Pokémon</party-filter-option>
         <party-filter-option id="filter_show_abilities" key="abilities">Abilities</party-filter-option>
         <party-filter-option id="filter_show_moves" key="moves">Moves</party-filter-option>
+        <div class="card" style="margin: auto; width: fit-content; height: fit-content; min-height: fit-content; margin-top: 15px">
+            <span id="target_data_sort_button" class="button" style="font-size: 25px; font-weight: bold; padding: 2px"></span>
+            <span id="target_data_sort_container"></span>
+        </div>
     </div>
-    <div id="filtered_data_list" class="filteredList"></div>
+    <div id="filtered_data_list" class="dataList"></div>
 </template>
 
 <template id="party-dropdown-template">
@@ -198,8 +218,6 @@
         <party-checkbox id="starter_only_checkbox">Starters Only</party-checkbox>
         <party-drop-down id="search_dropdown" placeholder="Enter a Pokémon"></party-drop-down>
     </div>
-
-    <sort></sort>
 </template>
 
 <template id="party-atlas-img-template">

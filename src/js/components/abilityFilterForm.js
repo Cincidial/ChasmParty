@@ -16,6 +16,12 @@ class AbilityFilterForm extends HTMLElement {
         this.desc_input.oninput = func
     }
 
+    get sort_id() {
+        return undefined
+    }
+
+    set sort_id(id) {}
+
     getFilters() {
         const filters = []
         if (this.is_primival_checkbox.checked) {
