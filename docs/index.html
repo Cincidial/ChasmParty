@@ -157,6 +157,13 @@
             overflow: scroll;
             padding: 5px;
         }
+
+        .centerInDiv {
+            margin: auto;
+            width: fit-content;
+            height: fit-content;
+            min-height: fit-content;
+        }
     </style>
     <h1 style="text-align: center">Pokédex</h1>
     <div style="display: flex; flex-direction: row; overflow: scroll">
@@ -176,10 +183,12 @@
         id="filtered_data_targets_checkboxes_list"
         style="min-height: fit-content; width: fit-content; height: fit-content; margin-right: auto; margin-left: auto; padding: 10px"
     >
-        <party-filter-option id="filter_show_pokemon" key="pokemon">Pokémon</party-filter-option>
-        <party-filter-option id="filter_show_abilities" key="abilities">Abilities</party-filter-option>
-        <party-filter-option id="filter_show_moves" key="moves">Moves</party-filter-option>
-        <div class="card" style="margin: auto; width: fit-content; height: fit-content; min-height: fit-content; margin-top: 15px">
+        <div class="centerInDiv">
+            <party-filter-option id="filter_show_pokemon" key="pokemon">Pokémon</party-filter-option>
+            <party-filter-option id="filter_show_abilities" key="abilities">Abilities</party-filter-option>
+            <party-filter-option id="filter_show_moves" key="moves">Moves</party-filter-option>
+        </div>
+        <div class="card centerInDiv" style="margin-top: 15px">
             <span id="target_data_sort_button" class="button" style="font-size: 25px; font-weight: bold; padding: 2px"></span>
             <span id="target_data_sort_container"></span>
         </div>

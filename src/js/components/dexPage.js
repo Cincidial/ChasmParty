@@ -73,7 +73,16 @@ class DexPage extends HTMLElement {
                 this,
                 'filter_show_pokemon',
                 Object.values(pbs_data.pokemon),
-                [new SortOption('dex-num', 'Dex Number', (d) => d.dex_num), new SortOption('bst', 'BST', (d) => d.bst)],
+                [
+                    new SortOption('dex-num', 'Dex Number', (d) => d.dex_num),
+                    new SortOption('bst', 'BST', (d) => d.bst),
+                    new SortOption('hp', 'HP', (d) => d._Data.BaseStats.HP),
+                    new SortOption('atk', 'Attack', (d) => d._Data.BaseStats.Atk),
+                    new SortOption('def', 'Defense', (d) => d._Data.BaseStats.Def),
+                    new SortOption('spatk', 'Sp. Atk', (d) => d._Data.BaseStats.SpAtk),
+                    new SortOption('spdef', 'Sp. Def', (d) => d._Data.BaseStats.SpDef),
+                    new SortOption('spe', 'Speed', (d) => d._Data.BaseStats.Spe),
+                ],
                 (x) => getPokemonIconImg(x._ID),
             ),
             new TargetData(
