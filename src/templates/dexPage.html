@@ -11,18 +11,13 @@
             min-height: 10vh;
         }
 
-        .dataList {
-            display: flex;
-            flex-wrap: wrap;
-            overflow: scroll;
-            padding: 5px;
-        }
-
-        .centerInDiv {
-            margin: auto;
+        .centeredContainer {
+            min-height: fit-content;
             width: fit-content;
             height: fit-content;
-            min-height: fit-content;
+            margin-right: auto;
+            margin-left: auto;
+            padding: 10px;
         }
     </style>
     <h1 style="text-align: center">Pokédex</h1>
@@ -39,19 +34,10 @@
         </div>
         <div id="applied_filters_list" class="card"></div>
     </div>
-    <div
-        id="filtered_data_targets_checkboxes_list"
-        style="min-height: fit-content; width: fit-content; height: fit-content; margin-right: auto; margin-left: auto; padding: 10px"
-    >
-        <div class="centerInDiv">
-            <party-filter-option id="filter_show_pokemon" key="pokemon">Pokémon</party-filter-option>
-            <party-filter-option id="filter_show_abilities" key="abilities">Abilities</party-filter-option>
-            <party-filter-option id="filter_show_moves" key="moves">Moves</party-filter-option>
-        </div>
-        <div class="card centerInDiv" style="margin-top: 15px">
-            <span id="target_data_sort_button" class="button" style="font-size: 25px; font-weight: bold; padding: 2px"></span>
-            <span id="target_data_sort_container"></span>
-        </div>
+    <div id="filtered_data_targets_checkboxes_list" class="centeredContainer">
+        <party-filter-option id="filter_show_pokemon" key="pokemon">Pokémon</party-filter-option>
+        <party-filter-option id="filter_show_abilities" key="abilities">Abilities</party-filter-option>
+        <party-filter-option id="filter_show_moves" key="moves">Moves</party-filter-option>
     </div>
-    <div id="filtered_data_list" class="dataList"></div>
+    <div id="filtered_data_container" class="centeredContainer"></div>
 </template>

@@ -18,36 +18,21 @@ class SortOption {
     }
 }
 
-// This is the target set of data that the filter and sort options will be used on
+// This is the target set of data that the filter will be used on
 class TargetData {
-    constructor(dex_page, checkbox_id, data, sort_options, gen_element_func) {
-        this.option_id = checkbox_id
+    constructor(dex_page, option_id, table, data) {
+        this.option_id = option_id
         this.option_element = dex_page.getElementById(this.option_id)
+        this.table = table
         this.data = data
-        this.gen_element_func = gen_element_func
-        this.sort_descending = false
-        this.get_sort_value_func = sort_options[0].get_sort_value_func
-        this.sort_radio_group = new RadioGroup().setup(
-            sort_options.map((x) => [x.key, x.value]),
-            (event) => {
-                this.get_sort_value_func = this.sort_options_to_func_hash[event.target.value]
-                dex_page.updateDisplay()
-            },
-        )
-        this.sort_options_to_func_hash = {}
 
         this.option_element.onclick = () => {
             dex_page.current_target_data.option_element.active = false
             dex_page.current_target_data = this
             this.option_element.active = true
 
-            dex_page.target_data_sort_container.replaceChildren(this.sort_radio_group)
             dex_page.updateDisplay()
         }
-
-        sort_options.forEach((x) => {
-            this.sort_options_to_func_hash[x.key] = x.get_sort_value_func
-        })
     }
 }
 
@@ -59,9 +44,9 @@ class DexPage extends HTMLElement {
         this.add_filter_button = this.getElementById('add_filter_button')
         this.filter_form = this.getElementById('filter_form')
         this.applied_filters_list = this.getElementById('applied_filters_list')
-        this.filtered_data_list = this.getElementById('filtered_data_list')
-        this.target_data_sort_button = this.getElementById('target_data_sort_button')
-        this.target_data_sort_container = this.getElementById('target_data_sort_container')
+        this.filtered_data_container = this.getElementById('filtered_data_container')
+
+        this.add_filter_button.onclick = () => this.addCurrentFilter()
 
         this.filter_form_cards = [
             new FilterFormCard(this, 'filter_option_pokemon', () => new PokemonFilterForm()),
@@ -72,32 +57,33 @@ class DexPage extends HTMLElement {
             new TargetData(
                 this,
                 'filter_show_pokemon',
+                new Table().setup([
+                    new TableColumn(
+                        'Dex #',
+                        (x) => x.dex_num,
+                        (x) => x.dex_num,
+                    ),
+                    new TableColumn('', (x) => getPokemonIconImg(x._ID)),
+                    new TableColumn(
+                        'BST',
+                        (x) => x.bst,
+                        (x) => x.bst,
+                    ),
+                ]),
                 Object.values(pbs_data.pokemon),
-                [
-                    new SortOption('dex-num', 'Dex Number', (d) => d.dex_num),
-                    new SortOption('bst', 'BST', (d) => d.bst),
-                    new SortOption('hp', 'HP', (d) => d._Data.BaseStats.HP),
-                    new SortOption('atk', 'Attack', (d) => d._Data.BaseStats.Atk),
-                    new SortOption('def', 'Defense', (d) => d._Data.BaseStats.Def),
-                    new SortOption('spatk', 'Sp. Atk', (d) => d._Data.BaseStats.SpAtk),
-                    new SortOption('spdef', 'Sp. Def', (d) => d._Data.BaseStats.SpDef),
-                    new SortOption('spe', 'Speed', (d) => d._Data.BaseStats.Spe),
-                ],
-                (x) => getPokemonIconImg(x._ID),
             ),
             new TargetData(
                 this,
                 'filter_show_abilities',
+                new Table().setup([
+                    new TableColumn(
+                        'Dex #',
+                        (x) => x.dex_num,
+                        (x) => x.dex_num,
+                    ),
+                    new TableColumn('', (x) => getPokemonIconImg(x._ID)),
+                ]),
                 Object.values(pbs_data.pokemon),
-                [new SortOption('dex-num', 'Dex Number', (d) => d.dex_num)],
-                (x) => getPokemonIconImg(x._ID),
-            ),
-            new TargetData(
-                this,
-                'filter_show_moves',
-                Object.values(pbs_data.pokemon),
-                [new SortOption('dex-num', 'Dex Number', (d) => d.dex_num)],
-                (x) => getPokemonIconImg(x._ID),
             ),
         ]
 
@@ -105,20 +91,13 @@ class DexPage extends HTMLElement {
         this.current_target_data = this.target_data_list[0]
         this.applied_filters = []
 
-        this.add_filter_button.onclick = () => this.addCurrentFilter()
-        this.target_data_sort_button.onclick = () => {
-            this.current_target_data.sort_descending = !this.current_target_data.sort_descending
-            this.updateDisplay()
-        }
-        this.current_target_data.option_element.onclick()
-
-        this.updateDisplay()
         this.setFilterForm(this.filter_form_cards[0])
+        this.current_target_data.option_element.onclick()
     }
 
     updateDisplay() {
-        const filter_target = this.current_target_data
-        const filter_configs = [...this.applied_filters, ...(this.current_filter_form_card?.in_progress_form?.getFilters() ?? [])]
+        const target_data = this.current_target_data
+        const filter_configs = [...this.applied_filters, ...this.current_filter_form_card.in_progress_form.getFilters()]
 
         // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
@@ -128,9 +107,9 @@ class DexPage extends HTMLElement {
             return acc
         }, {})
 
-        this.filtered_data_list.replaceChildren(
-            ...filter_target.data
-                .filter((d) => {
+        this.filtered_data_container.replaceChildren(
+            this.current_target_data.table.setData(
+                target_data.data.filter((d) => {
                     if (grouped_filters.length == 0) return true
 
                     for (const grouped_filter of Object.values(grouped_filters)) {
@@ -139,14 +118,8 @@ class DexPage extends HTMLElement {
                     }
 
                     return true
-                })
-                .sort((a, b) => {
-                    const value_a = filter_target.get_sort_value_func(a)
-                    const value_b = filter_target.get_sort_value_func(b)
-
-                    return (value_a === value_b ? 0 : value_a > value_b ? 1 : -1) * (filter_target.sort_descending ? -1 : 1)
-                })
-                .map((x) => filter_target.gen_element_func(x)),
+                }),
+            ),
         )
 
         this.applied_filters_list.replaceChildren(
@@ -157,8 +130,6 @@ class DexPage extends HTMLElement {
                 return filter_group_display
             }),
         )
-
-        this.target_data_sort_button.innerText = this.current_target_data.sort_descending ? '↓' : '↑'
     }
 
     setFilterForm(filter_form_card) {
