@@ -44,8 +44,28 @@
 
 <template id="party-table-template">
     <style>
-        .headerRow {
-            background-color: blue;
+        table {
+            border: 1px solid #e8eadd;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            min-width: 75px;
+            padding: 2px 7px;
+            font-size: 18px;
+            color: #e8eadd;
+            background-color: #4d5d69;
+            border-bottom: 3px solid #e8eadd;
+        }
+
+        th.sortable {
+            cursor: pointer;
+        }
+
+        th.sortable:hover {
+            color: #38393b;
+            background-color: #e8eadd;
         }
 
         tbody tr:nth-child(odd) {
@@ -55,9 +75,20 @@
         tbody tr:nth-child(even) {
             background-color: #4d5d69;
         }
+
+        td {
+            font-size: 17px;
+            padding: 2px 7px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        td > * {
+            display: inline-block;
+        }
     </style>
     <table id="table">
-        <thead id="thead" class="headerRow"></thead>
+        <thead id="thead"></thead>
         <tbody id="tbody"></tbody>
     </table>
 </template>

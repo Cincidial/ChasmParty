@@ -372,6 +372,7 @@ class Table extends HTMLElement {
                         th.textContent = `↑ ${col.header_name}`
                     }
 
+                    th.classList.add('sortable')
                     th.onclick = () => {
                         const old_col = this.sort_col
                         const new_col = col
@@ -409,7 +410,7 @@ class Table extends HTMLElement {
                 })
                 .flatMap((d) => {
                     const row = this.tbody.insertRow()
-                    row.className = 'dataRow'
+                    row.classList.add('dataRow')
                     row.replaceChildren(
                         ...this.table_column_list.map((col) => {
                             const cell = row.insertCell()
@@ -689,7 +690,7 @@ class PbsPokemon {
     constructor(k, v, i) {
         setPbsBaseMembers(this, k, v)
 
-        this.dex_num = i
+        this.dex_num = i + 1
         this.root_evolution = this._Data.Prevo == undefined ? this : undefined
         this.is_starter = false
         this.bst = Object.values(this._Data.BaseStats).reduce((a, cv) => a + cv, 0)

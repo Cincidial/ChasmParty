@@ -45,6 +45,7 @@ class Table extends HTMLElement {
                         th.textContent = `↑ ${col.header_name}`
                     }
 
+                    th.classList.add('sortable')
                     th.onclick = () => {
                         const old_col = this.sort_col
                         const new_col = col
@@ -82,7 +83,7 @@ class Table extends HTMLElement {
                 })
                 .flatMap((d) => {
                     const row = this.tbody.insertRow()
-                    row.className = 'dataRow'
+                    row.classList.add('dataRow')
                     row.replaceChildren(
                         ...this.table_column_list.map((col) => {
                             const cell = row.insertCell()
