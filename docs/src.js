@@ -498,6 +498,36 @@ class DexPage extends HTMLElement {
                         (x) => x.bst,
                         (x) => x.bst,
                     ),
+                    new TableColumn(
+                        'HP',
+                        (x) => x._Data.BaseStats.HP,
+                        (x) => x._Data.BaseStats.HP,
+                    ),
+                    new TableColumn(
+                        'Atk',
+                        (x) => x._Data.BaseStats.Atk,
+                        (x) => x._Data.BaseStats.Atk,
+                    ),
+                    new TableColumn(
+                        'Def',
+                        (x) => x._Data.BaseStats.Def,
+                        (x) => x._Data.BaseStats.Def,
+                    ),
+                    new TableColumn(
+                        'SpAtk',
+                        (x) => x._Data.BaseStats.SpAtk,
+                        (x) => x._Data.BaseStats.SpAtk,
+                    ),
+                    new TableColumn(
+                        'SpDef',
+                        (x) => x._Data.BaseStats.SpDef,
+                        (x) => x._Data.BaseStats.SpDef,
+                    ),
+                    new TableColumn(
+                        'Speed',
+                        (x) => x._Data.BaseStats.Spe,
+                        (x) => x._Data.BaseStats.Spe,
+                    ),
                 ]),
                 Object.values(pbs_data.pokemon),
             ),
