@@ -309,6 +309,14 @@ function getAtlasImg(x, y, w, h, filename) {
     return atlas_img
 }
 
+function getTypeIcon(id) {
+    const w = sprite_atlas_data.Type.w
+    const h = sprite_atlas_data.Type.h
+    const data = sprite_atlas_data.Type[id]
+
+    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_data.Artifact)
+}
+
 function getPokemonIconImg(id) {
     const w = sprite_atlas_data.Icon.w
     const h = sprite_atlas_data.Icon.h
@@ -492,7 +500,12 @@ class DexPage extends HTMLElement {
                         (x) => x.dex_num,
                         (x) => x.dex_num,
                     ),
-                    new TableColumn('', (x) => getPokemonIconImg(x._ID)),
+                    new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
+                    new TableColumn(
+                        'Type 1',
+                        (x) => x.type1.img_icon,
+                        (x) => x.type1._ID,
+                    ),
                     new TableColumn(
                         'BST',
                         (x) => x.bst,
@@ -528,19 +541,6 @@ class DexPage extends HTMLElement {
                         (x) => x._Data.BaseStats.Spe,
                         (x) => x._Data.BaseStats.Spe,
                     ),
-                ]),
-                Object.values(pbs_data.pokemon),
-            ),
-            new TargetData(
-                this,
-                'filter_show_abilities',
-                new Table().setup([
-                    new TableColumn(
-                        'Dex #',
-                        (x) => x.dex_num,
-                        (x) => x.dex_num,
-                    ),
-                    new TableColumn('', (x) => getPokemonIconImg(x._ID)),
                 ]),
                 Object.values(pbs_data.pokemon),
             ),
@@ -723,6 +723,8 @@ class PbsPokemon {
         this.dex_num = i + 1
         this.root_evolution = this._Data.Prevo == undefined ? this : undefined
         this.is_starter = false
+        this.type1 = pbs_data.types[this._Data.Type1]
+        this.type2 = this._Data.Type2 ? pbs_data.types[this._Data.Type2] : undefined
         this.bst = Object.values(this._Data.BaseStats).reduce((a, cv) => a + cv, 0)
     }
 
@@ -745,11 +747,33 @@ class PbsPokemon {
     get has_no_evo_line() {
         return this._Data.Prevo == undefined && this._Data.Evolutions == undefined
     }
+
+    get img_icon() {
+        return getPokemonIconImg(this._ID)
+    }
 }
 
 class PbsAbility {
     constructor(k, v) {
         setPbsBaseMembers(this, k, v)
+    }
+}
+
+class PbsType {
+    static type_chart = {} // This is setup as `type_chart[user_type][target_type] = multiplier`
+    static init(pbs_types) {
+        pbs_types.forEach((x) => (this.type_chart[x._ID] = {}))
+        pbs_types.filter((x) => x._Data.Resistances).forEach((x) => x._Data.Resistances.forEach((y) => (this.type_chart[y][x._ID] = 0.5)))
+        pbs_types.filter((x) => x._Data.Immunities).forEach((x) => x._Data.Immunities.forEach((y) => (this.type_chart[y][x._ID] = 0)))
+        pbs_types.filter((x) => x._Data.Weaknesses).forEach((x) => x._Data.Weaknesses.forEach((y) => (this.type_chart[y][x._ID] = 2)))
+    }
+
+    constructor(k, v) {
+        setPbsBaseMembers(this, v.InternalName, v)
+    }
+
+    get img_icon() {
+        return getTypeIcon(this._ID)
     }
 }
 
@@ -785,10 +809,13 @@ async function getServerData() {
 
         // Build all the PBS data classes
         pbs_data.generations = [...new Set(Object.values(server_data.PBS.Pokemon).map((x) => x.Generation))].filter((x) => x).sort()
+        pbs_data.types = convertPbsDataListToHash(Object.entries(server_data.PBS.Types).map(([k, v]) => new PbsType(k, v)))
         pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
         pbs_data.abilities = convertPbsDataListToHash(Object.entries(server_data.PBS.Abilities).map(([k, v]) => new PbsAbility(k, v)))
 
         // Post-Processing
+        PbsType.init(Object.values(pbs_data.types))
+
         const evolutions_to_process = Object.values(pbs_data.pokemon).filter((x) => x.root_evolution)
         while (evolutions_to_process.length > 0) {
             const mon = evolutions_to_process.pop()

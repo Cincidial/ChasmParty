@@ -63,7 +63,12 @@ class DexPage extends HTMLElement {
                         (x) => x.dex_num,
                         (x) => x.dex_num,
                     ),
-                    new TableColumn('', (x) => getPokemonIconImg(x._ID)),
+                    new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
+                    new TableColumn(
+                        'Type 1',
+                        (x) => x.type1.img_icon,
+                        (x) => x.type1._ID,
+                    ),
                     new TableColumn(
                         'BST',
                         (x) => x.bst,
@@ -99,19 +104,6 @@ class DexPage extends HTMLElement {
                         (x) => x._Data.BaseStats.Spe,
                         (x) => x._Data.BaseStats.Spe,
                     ),
-                ]),
-                Object.values(pbs_data.pokemon),
-            ),
-            new TargetData(
-                this,
-                'filter_show_abilities',
-                new Table().setup([
-                    new TableColumn(
-                        'Dex #',
-                        (x) => x.dex_num,
-                        (x) => x.dex_num,
-                    ),
-                    new TableColumn('', (x) => getPokemonIconImg(x._ID)),
                 ]),
                 Object.values(pbs_data.pokemon),
             ),

@@ -14,6 +14,14 @@ function getAtlasImg(x, y, w, h, filename) {
     return atlas_img
 }
 
+function getTypeIcon(id) {
+    const w = sprite_atlas_data.Type.w
+    const h = sprite_atlas_data.Type.h
+    const data = sprite_atlas_data.Type[id]
+
+    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_data.Artifact)
+}
+
 function getPokemonIconImg(id) {
     const w = sprite_atlas_data.Icon.w
     const h = sprite_atlas_data.Icon.h
