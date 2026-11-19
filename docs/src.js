@@ -246,6 +246,29 @@ class AbilityFilterForm extends HTMLElement {
 }
 customElements.define('party-ability-filter-form', AbilityFilterForm)
 
+class VerticalStack extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-vertical-stack-template')
+
+        this.container = this.getElementById('container')
+    }
+
+    setup(list) {
+        this.container.replaceChildren(
+            ...list.map((x) => {
+                if (x instanceof HTMLElement) return x
+
+                const div = document.createElement('div')
+                div.innerHTML = x
+                return div
+            }),
+        )
+        return this
+    }
+}
+customElements.define('party-vertical-stack', VerticalStack)
+
 class FilterGroupDisplay extends HTMLElement {
     constructor() {
         super()
@@ -504,7 +527,7 @@ class DexPage extends HTMLElement {
                 new Table().setup([
                     new TableColumn(
                         'Dex #',
-                        (x) => x.dex_num,
+                        (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
                         (x) => x.dex_num,
                     ),
                     new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
@@ -512,6 +535,11 @@ class DexPage extends HTMLElement {
                         'Type 1',
                         (x) => x.type1.img_icon,
                         (x) => x.type1._ID,
+                    ),
+                    new TableColumn(
+                        'Type 2',
+                        (x) => x.type2?.img_icon ?? '',
+                        (x) => x.type2?._ID ?? '_',
                     ),
                     new TableColumn(
                         'BST',

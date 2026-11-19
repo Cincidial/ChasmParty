@@ -60,7 +60,7 @@ class DexPage extends HTMLElement {
                 new Table().setup([
                     new TableColumn(
                         'Dex #',
-                        (x) => x.dex_num,
+                        (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
                         (x) => x.dex_num,
                     ),
                     new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
@@ -68,6 +68,11 @@ class DexPage extends HTMLElement {
                         'Type 1',
                         (x) => x.type1.img_icon,
                         (x) => x.type1._ID,
+                    ),
+                    new TableColumn(
+                        'Type 2',
+                        (x) => x.type2?.img_icon ?? '',
+                        (x) => x.type2?._ID ?? '_',
                     ),
                     new TableColumn(
                         'BST',
