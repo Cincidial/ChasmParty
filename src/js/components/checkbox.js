@@ -13,5 +13,9 @@ class Checkbox extends HTMLElement {
     get checked() {
         return this.checkbox.checked
     }
+
+    set checked(value) {
+        this.checkbox.checked = value
+    }
 }
 customElements.define('party-checkbox', Checkbox)

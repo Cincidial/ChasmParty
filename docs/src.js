@@ -13,6 +13,10 @@ class Checkbox extends HTMLElement {
     get checked() {
         return this.checkbox.checked
     }
+
+    set checked(value) {
+        this.checkbox.checked = value
+    }
 }
 customElements.define('party-checkbox', Checkbox)
 
@@ -53,79 +57,109 @@ class PokemonFilterForm extends HTMLElement {
         const filters = []
         if (this.generation_select.value != 'Any') {
             filters.push(
-                new FilterConfig('Generation', this.generation_select.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            return fv.includes(`${d._Data.Generation ?? -1}`)
-                    }
+                new FilterConfig(
+                    'Generation',
+                    this.generation_select.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                return fv.includes(`${d._Data.Generation ?? -1}`)
+                        }
 
-                    return false
-                }),
+                        return false
+                    },
+                    () => (this.generation_select.value = 'Any'),
+                ),
             )
         }
 
         if (this.evolution_select.value != 'Any') {
             filters.push(
-                new FilterConfig('Evolution', this.evolution_select.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            if (fv.includes('First') && d.is_first_stage) return true
-                            if (fv.includes('Final') && d.is_final_stage) return true
-                            if (fv.includes('Single') && d.has_no_evo_line) return true
-                            break
-                    }
+                new FilterConfig(
+                    'Evolution',
+                    this.evolution_select.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                if (fv.includes('First') && d.is_first_stage) return true
+                                if (fv.includes('Final') && d.is_final_stage) return true
+                                if (fv.includes('Single') && d.has_no_evo_line) return true
+                                break
+                        }
 
-                    return false
-                }),
+                        return false
+                    },
+                    () => (this.evolution_select.value = 'Any'),
+                ),
             )
         }
 
         if (this.only_legendary_checkbox.checked) {
             filters.push(
-                new FilterConfig('Only Legends', true, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            return fv.includes(true) && d.is_legend
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Only Legends',
+                    true,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                return fv.includes(true) && d.is_legend
+                        }
+                        return false
+                    },
+                    () => (this.only_legendary_checkbox.checked = false),
+                ),
             )
         }
 
         if (this.hide_legendary_checkbox.checked) {
             filters.push(
-                new FilterConfig('Hide Legends', true, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            return fv.includes(true) && !d.is_legend
-                    }
+                new FilterConfig(
+                    'Hide Legends',
+                    true,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                return fv.includes(true) && !d.is_legend
+                        }
 
-                    return false
-                }),
+                        return false
+                    },
+                    () => (this.hide_legendary_checkbox.checked = false),
+                ),
             )
         }
 
         if (this.starter_only_checkbox.checked) {
             filters.push(
-                new FilterConfig('Starters Only', true, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            return fv.includes(true) && d.is_starter
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Starters Only',
+                    true,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                return fv.includes(true) && d.is_starter
+                        }
+                        return false
+                    },
+                    () => (this.starter_only_checkbox.checked = false),
+                ),
             )
         }
 
         if (this.search_dropdown.value) {
             filters.push(
-                new FilterConfig('Pokemon Search', this.search_dropdown.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Pokemon Search',
+                    this.search_dropdown.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
+                        }
+                        return false
+                    },
+                    () => (this.search_dropdown.value = ''),
+                ),
             )
         }
 
@@ -291,7 +325,7 @@ class FilterGroupDisplay extends HTMLElement {
                     text = 'False'
                 }
 
-                capsule.setup(text, x, x.in_progress ? null : remove_callback)
+                capsule.setup(text, x, remove_callback)
 
                 return capsule
             }),
@@ -655,7 +689,11 @@ class DexPage extends HTMLElement {
     }
 
     removeFilter(filter_config) {
-        this.applied_filters = this.applied_filters.filter((x) => x !== filter_config)
+        if (filter_config.in_progress) {
+            filter_config.in_prog_reset_func()
+        } else {
+            this.applied_filters = this.applied_filters.filter((x) => x !== filter_config)
+        }
         this.updateDisplay()
     }
 }
@@ -704,6 +742,10 @@ class Dropdown extends HTMLElement {
 
     get value() {
         return this.list.value
+    }
+
+    set value(value) {
+        this.list.value = value
     }
 
     set onchange(func) {
@@ -814,11 +856,12 @@ class PbsType {
 }
 
 class FilterConfig {
-    constructor(id, value, filter_func) {
+    constructor(id, value, filter_func, in_prog_reset_func) {
         this.id = id
         this.value = value
         this.in_progress = true
         this.filter_func = filter_func // Filter funcs always indicate the value passes the filter (return true)
+        this.in_prog_reset_func = in_prog_reset_func
     }
 }
 

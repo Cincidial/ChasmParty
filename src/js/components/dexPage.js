@@ -187,7 +187,11 @@ class DexPage extends HTMLElement {
     }
 
     removeFilter(filter_config) {
-        this.applied_filters = this.applied_filters.filter((x) => x !== filter_config)
+        if (filter_config.in_progress) {
+            filter_config.in_prog_reset_func()
+        } else {
+            this.applied_filters = this.applied_filters.filter((x) => x !== filter_config)
+        }
         this.updateDisplay()
     }
 }

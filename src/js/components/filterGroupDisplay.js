@@ -20,7 +20,7 @@ class FilterGroupDisplay extends HTMLElement {
                     text = 'False'
                 }
 
-                capsule.setup(text, x, x.in_progress ? null : remove_callback)
+                capsule.setup(text, x, remove_callback)
 
                 return capsule
             }),

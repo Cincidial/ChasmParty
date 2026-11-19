@@ -15,6 +15,10 @@ class Dropdown extends HTMLElement {
         return this.list.value
     }
 
+    set value(value) {
+        this.list.value = value
+    }
+
     set onchange(func) {
         this.list.addEventListener('input', (e) => func())
     }
