@@ -646,12 +646,12 @@ class DexPage extends HTMLElement {
             x.in_progress = false
             this.applied_filters.push(x)
         })
-        this.updateDisplay()
 
         this.current_filter_form_card.in_progress_form = this.current_filter_form_card.new_form_func()
         this.current_filter_form_card.in_progress_form.on_change = () => this.updateDisplay()
 
         this.filter_form.replaceChildren(this.current_filter_form_card.in_progress_form)
+        this.updateDisplay()
     }
 
     removeFilter(filter_config) {
