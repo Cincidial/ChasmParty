@@ -178,12 +178,12 @@ class DexPage extends HTMLElement {
     addCurrentFilter() {
         this.filter_form_cards
             .filter((x) => x.in_progress_form)
-            .forEach((x) => {
-                x.getFilters().forEach((x) => {
-                    x.in_progress = false
-                    this.applied_filters.push(x)
+            .forEach((card) => {
+                card.in_progress_form.getFilters().forEach((fc) => {
+                    fc.in_progress = false
+                    this.applied_filters.push(fc)
                 })
-                x.in_progress_form = null
+                card.in_progress_form = null
             })
 
         this.current_filter_form_card.in_progress_form = this.current_filter_form_card.new_form_func()
