@@ -26,39 +26,54 @@ class AbilityFilterForm extends HTMLElement {
         const filters = []
         if (this.is_primival_checkbox.checked) {
             filters.push(
-                new FilterConfig('Primeval Ability', true, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsAbility:
-                            return fv.includes(true) && d._Data.IsPrimeval
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Primeval Ability',
+                    true,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsAbility:
+                                return fv.includes(true) && d._Data.IsPrimeval
+                        }
+                        return false
+                    },
+                    () => (this.is_primival_checkbox.checked = false),
+                ),
             )
         }
 
         if (this.name_dropdown.value) {
             filters.push(
-                new FilterConfig('Abilty Name', this.name_dropdown.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
-                            return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Abilty Name',
+                    this.name_dropdown.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
+                                return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                        }
+                        return false
+                    },
+                    () => (this.name_dropdown.value = ''),
+                ),
             )
         }
 
         if (this.desc_input.value) {
             filters.push(
-                new FilterConfig('Ability Description', this.desc_input.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
-                            return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Ability Description',
+                    this.desc_input.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
+                                return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                        }
+                        return false
+                    },
+                    () => (this.name_dropdown.value = ''),
+                ),
             )
         }
 

@@ -124,7 +124,10 @@ class DexPage extends HTMLElement {
 
     updateDisplay() {
         const target_data = this.current_target_data
-        const filter_configs = [...this.applied_filters, ...this.current_filter_form_card.in_progress_form.getFilters()]
+        const filter_configs = [
+            ...this.applied_filters,
+            ...this.filter_form_cards.filter((x) => x.in_progress_form).flatMap((x) => x.in_progress_form.getFilters()),
+        ]
 
         // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
@@ -170,14 +173,18 @@ class DexPage extends HTMLElement {
 
         this.current_filter_form_card = filter_form_card
         this.filter_form.replaceChildren(filter_form_card.in_progress_form)
-        this.updateDisplay()
     }
 
     addCurrentFilter() {
-        this.current_filter_form_card.in_progress_form.getFilters().forEach((x) => {
-            x.in_progress = false
-            this.applied_filters.push(x)
-        })
+        this.filter_form_cards
+            .filter((x) => x.in_progress_form)
+            .forEach((x) => {
+                x.getFilters().forEach((x) => {
+                    x.in_progress = false
+                    this.applied_filters.push(x)
+                })
+                x.in_progress_form = null
+            })
 
         this.current_filter_form_card.in_progress_form = this.current_filter_form_card.new_form_func()
         this.current_filter_form_card.in_progress_form.on_change = () => this.updateDisplay()

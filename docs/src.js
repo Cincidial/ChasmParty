@@ -239,39 +239,54 @@ class AbilityFilterForm extends HTMLElement {
         const filters = []
         if (this.is_primival_checkbox.checked) {
             filters.push(
-                new FilterConfig('Primeval Ability', true, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsAbility:
-                            return fv.includes(true) && d._Data.IsPrimeval
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Primeval Ability',
+                    true,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsAbility:
+                                return fv.includes(true) && d._Data.IsPrimeval
+                        }
+                        return false
+                    },
+                    () => (this.is_primival_checkbox.checked = false),
+                ),
             )
         }
 
         if (this.name_dropdown.value) {
             filters.push(
-                new FilterConfig('Abilty Name', this.name_dropdown.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
-                            return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Abilty Name',
+                    this.name_dropdown.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
+                                return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                        }
+                        return false
+                    },
+                    () => (this.name_dropdown.value = ''),
+                ),
             )
         }
 
         if (this.desc_input.value) {
             filters.push(
-                new FilterConfig('Ability Description', this.desc_input.value, (d, fv) => {
-                    switch (d.constructor) {
-                        case PbsPokemon:
-                            const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
-                            return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
-                    }
-                    return false
-                }),
+                new FilterConfig(
+                    'Ability Description',
+                    this.desc_input.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
+                                return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                        }
+                        return false
+                    },
+                    () => (this.name_dropdown.value = ''),
+                ),
             )
         }
 
@@ -626,7 +641,10 @@ class DexPage extends HTMLElement {
 
     updateDisplay() {
         const target_data = this.current_target_data
-        const filter_configs = [...this.applied_filters, ...this.current_filter_form_card.in_progress_form.getFilters()]
+        const filter_configs = [
+            ...this.applied_filters,
+            ...this.filter_form_cards.filter((x) => x.in_progress_form).flatMap((x) => x.in_progress_form.getFilters()),
+        ]
 
         // Filters of the same ID should be grouped as ORs, different filters should be applied as ANDs
         const grouped_filters = filter_configs.reduce((acc, data) => {
@@ -672,14 +690,18 @@ class DexPage extends HTMLElement {
 
         this.current_filter_form_card = filter_form_card
         this.filter_form.replaceChildren(filter_form_card.in_progress_form)
-        this.updateDisplay()
     }
 
     addCurrentFilter() {
-        this.current_filter_form_card.in_progress_form.getFilters().forEach((x) => {
-            x.in_progress = false
-            this.applied_filters.push(x)
-        })
+        this.filter_form_cards
+            .filter((x) => x.in_progress_form)
+            .forEach((x) => {
+                x.getFilters().forEach((x) => {
+                    x.in_progress = false
+                    this.applied_filters.push(x)
+                })
+                x.in_progress_form = null
+            })
 
         this.current_filter_form_card.in_progress_form = this.current_filter_form_card.new_form_func()
         this.current_filter_form_card.in_progress_form.on_change = () => this.updateDisplay()
