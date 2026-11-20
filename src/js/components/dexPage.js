@@ -75,11 +75,6 @@ class DexPage extends HTMLElement {
                         (x) => x.type2?._ID ?? '_',
                     ),
                     new TableColumn(
-                        'BST',
-                        (x) => x.bst,
-                        (x) => x.bst,
-                    ),
-                    new TableColumn(
                         'HP',
                         (x) => x._Data.BaseStats.HP,
                         (x) => x._Data.BaseStats.HP,
@@ -108,6 +103,11 @@ class DexPage extends HTMLElement {
                         'Speed',
                         (x) => x._Data.BaseStats.Spe,
                         (x) => x._Data.BaseStats.Spe,
+                    ),
+                    new TableColumn(
+                        'BST',
+                        (x) => x.bst,
+                        (x) => x.bst,
                     ),
                 ]),
                 Object.values(pbs_data.pokemon),
