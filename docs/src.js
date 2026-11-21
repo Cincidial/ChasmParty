@@ -331,18 +331,14 @@ class FilterGroupDisplay extends HTMLElement {
         this.header_div.replaceChildren(group_name)
         this.data_div.replaceChildren(
             ...filter_configs.map((x) => {
-                const capsule = new Capsule()
                 var text = x.value
-
                 if (text === true) {
                     text = 'True'
                 } else if (text === false) {
                     text = 'False'
                 }
 
-                capsule.setup(text, x, remove_callback)
-
-                return capsule
+                return new Capsule().setup(text, x, remove_callback)
             }),
         )
     }
@@ -591,6 +587,8 @@ class DexPage extends HTMLElement {
                         (x) => x.type2?.img_icon ?? '',
                         (x) => x.type2?._ID ?? '_',
                     ),
+                    new TableColumn('Abilities', (x) => new VerticalStack().setup(x.abilities.map((y) => y.capsule_element))),
+                    new TableColumn('Tribes', (x) => new VerticalStack().setup(x.tribes.map((x) => x.capsule_element))),
                     new TableColumn(
                         'HP',
                         (x) => x._Data.BaseStats.HP,
@@ -801,20 +799,35 @@ class Capsule extends HTMLElement {
         super()
         setupElement(this, 'party-capsule-template')
 
-        this.text_display = this.getElementById('text_display')
+        this.text_span = this.getElementById('text_span')
     }
 
-    setup(text, data, on_remove_callback = null) {
-        this.text_display.innerHTML = text
+    setup(display_value, data, on_remove_callback = null) {
+        var text = display_value
+        if (text instanceof TextWithTooltip) {
+            text = display_value.text
+            this.text_span.title = display_value.tooltip
+        }
+
+        this.text_span.innerHTML = text
         this.data = data
 
         if (on_remove_callback !== null) {
             this.setAttribute('removable', '')
             this.onclick = () => on_remove_callback(this.data)
         }
+
+        return this
     }
 }
 customElements.define('party-capsule', Capsule)
+
+class TextWithTooltip {
+    constructor(text, tooltip) {
+        this.text = text
+        this.tooltip = tooltip
+    }
+}
 
 class PbsPokemon {
     constructor(k, v, i) {
@@ -822,30 +835,16 @@ class PbsPokemon {
 
         this.dex_num = i + 1
         this.root_evolution = this._Data.Prevo == undefined ? this : undefined
-        this.is_starter = false
+        this.is_starter = false // Note - this is setup later in data post-processing
         this.type1 = pbs_data.types[this._Data.Type1]
         this.type2 = this._Data.Type2 ? pbs_data.types[this._Data.Type2] : undefined
+        this.abilities = this._Data.Abilities.map((x) => pbs_data.abilities[x])
+        this.tribes = this._Data.Tribes.map((x) => pbs_data.tribes[x])
         this.bst = Object.values(this._Data.BaseStats).reduce((a, cv) => a + cv, 0)
-    }
-
-    get is_legend() {
-        return this._Data.Flags?.some((x) => x == 'Legendary') ?? false
-    }
-
-    get abilities() {
-        return this._Data.Abilities.map((x) => pbs_data.abilities[x])
-    }
-
-    get is_first_stage() {
-        return this._Data.Prevo == undefined && this._Data.Evolutions
-    }
-
-    get is_final_stage() {
-        return this._Data.Prevo && this._Data.Evolutions == undefined
-    }
-
-    get has_no_evo_line() {
-        return this._Data.Prevo == undefined && this._Data.Evolutions == undefined
+        this.is_legend = this._Data.Flags?.some((x) => x == 'Legendary') ?? false
+        this.is_first_stage = this._Data.Prevo == undefined && this._Data.Evolutions
+        this.is_final_stage = this._Data.Prevo && this._Data.Evolutions == undefined
+        this.has_no_evo_line = this._Data.Prevo == undefined && this._Data.Evolutions == undefined
     }
 
     get img_icon() {
@@ -853,9 +852,23 @@ class PbsPokemon {
     }
 }
 
+class PbsTribe {
+    constructor(k, v) {
+        setPbsBaseMembers(this, k, v)
+    }
+
+    get capsule_element() {
+        return new Capsule().setup(new TextWithTooltip(this._Data.Name, this._Data.Description), this)
+    }
+}
+
 class PbsAbility {
     constructor(k, v) {
         setPbsBaseMembers(this, k, v)
+    }
+
+    get capsule_element() {
+        return new Capsule().setup(new TextWithTooltip(this._Data.Name, this._Data.Description), this)
     }
 }
 
@@ -911,8 +924,9 @@ async function getServerData() {
         // Build all the PBS data classes
         pbs_data.generations = [...new Set(Object.values(server_data.PBS.Pokemon).map((x) => x.Generation))].filter((x) => x).sort()
         pbs_data.types = convertPbsDataListToHash(Object.entries(server_data.PBS.Types).map(([k, v]) => new PbsType(k, v)))
-        pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
         pbs_data.abilities = convertPbsDataListToHash(Object.entries(server_data.PBS.Abilities).map(([k, v]) => new PbsAbility(k, v)))
+        pbs_data.tribes = convertPbsDataListToHash(Object.entries(server_data.PBS.Tribes).map(([k, v]) => new PbsTribe(k, v)))
+        pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
 
         // Post-Processing
         PbsType.init(Object.values(pbs_data.types))

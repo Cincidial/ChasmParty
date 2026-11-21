@@ -22,8 +22,9 @@ async function getServerData() {
         // Build all the PBS data classes
         pbs_data.generations = [...new Set(Object.values(server_data.PBS.Pokemon).map((x) => x.Generation))].filter((x) => x).sort()
         pbs_data.types = convertPbsDataListToHash(Object.entries(server_data.PBS.Types).map(([k, v]) => new PbsType(k, v)))
-        pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
         pbs_data.abilities = convertPbsDataListToHash(Object.entries(server_data.PBS.Abilities).map(([k, v]) => new PbsAbility(k, v)))
+        pbs_data.tribes = convertPbsDataListToHash(Object.entries(server_data.PBS.Tribes).map(([k, v]) => new PbsTribe(k, v)))
+        pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
 
         // Post-Processing
         PbsType.init(Object.values(pbs_data.types))

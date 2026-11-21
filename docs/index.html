@@ -17,6 +17,8 @@
         .stack {
             display: flex;
             flex-direction: column;
+            gap: 3px;
+            align-items: center;
         }
     </style>
 
@@ -95,7 +97,8 @@
         }
 
         td > * {
-            display: inline-block;
+            display: flex;
+            justify-content: center;
         }
     </style>
     <table id="table">
@@ -164,7 +167,7 @@
     </style>
 
     <span id="delete_button" class="delete-button" aria-label="Remove text">🗙</span>
-    <span id="text_display"></span>
+    <span id="text_span"></span>
 </template>
 
 <template id="party-loading-splash-template">

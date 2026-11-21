@@ -11,18 +11,14 @@ class FilterGroupDisplay extends HTMLElement {
         this.header_div.replaceChildren(group_name)
         this.data_div.replaceChildren(
             ...filter_configs.map((x) => {
-                const capsule = new Capsule()
                 var text = x.value
-
                 if (text === true) {
                     text = 'True'
                 } else if (text === false) {
                     text = 'False'
                 }
 
-                capsule.setup(text, x, remove_callback)
-
-                return capsule
+                return new Capsule().setup(text, x, remove_callback)
             }),
         )
     }

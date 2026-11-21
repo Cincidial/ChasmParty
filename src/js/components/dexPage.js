@@ -74,6 +74,8 @@ class DexPage extends HTMLElement {
                         (x) => x.type2?.img_icon ?? '',
                         (x) => x.type2?._ID ?? '_',
                     ),
+                    new TableColumn('Abilities', (x) => new VerticalStack().setup(x.abilities.map((y) => y.capsule_element))),
+                    new TableColumn('Tribes', (x) => new VerticalStack().setup(x.tribes.map((x) => x.capsule_element))),
                     new TableColumn(
                         'HP',
                         (x) => x._Data.BaseStats.HP,
