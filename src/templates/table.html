@@ -13,6 +13,9 @@
             color: #e8eadd;
             background-color: #7d9198;
             border-bottom: 3px solid #e8eadd;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         th.sortable {
@@ -37,6 +40,9 @@
             padding: 2px 7px;
             text-align: center;
             vertical-align: middle;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         td > * {
@@ -44,6 +50,7 @@
             justify-content: center;
         }
     </style>
+
     <table id="table">
         <thead id="thead"></thead>
         <tbody id="tbody"></tbody>

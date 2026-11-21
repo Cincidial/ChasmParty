@@ -7,6 +7,13 @@ class TableColumn {
     }
 }
 
+class TableRow {
+    constructor(data, tr) {
+        this.data = data
+        this.tr = tr
+    }
+}
+
 class Table extends HTMLElement {
     constructor() {
         super()
@@ -17,13 +24,32 @@ class Table extends HTMLElement {
         this.tbody = this.getElementById('tbody')
 
         this.table_column_list = []
-        this.data = null
+        this.table_row_list = null
         this.sort_descending = false
         this.sort_col = null
+        this.cached_table_rows = {} // The table uses on the website are read-only, so we can assume the row generated for an input ID is always going to look the same
     }
 
-    setData(data) {
-        this.data = data
+    setData(data, id_func) {
+        this.table_row_list = data.map((d) => {
+            if (!Object.hasOwn(this.cached_table_rows, id_func(d))) {
+                const tr = this.tbody.insertRow()
+                tr.classList.add('dataRow')
+                tr.replaceChildren(
+                    ...this.table_column_list.map((col) => {
+                        const cell = tr.insertCell()
+                        cell.replaceChildren(col.element_func(d))
+
+                        return cell
+                    }),
+                )
+
+                this.cached_table_rows[id_func(d)] = new TableRow(d, tr)
+            }
+
+            this.cached_table_rows[id_func(d)].data = d
+            return this.cached_table_rows[id_func(d)]
+        })
         this.updateBody()
 
         return this
@@ -72,29 +98,15 @@ class Table extends HTMLElement {
     }
 
     updateBody() {
-        const sort_value_func = this.sort_col.sort_value_func
         this.tbody.replaceChildren(
-            ...this.data
+            ...this.table_row_list
                 .sort((a, b) => {
-                    const value_a = sort_value_func(a)
-                    const value_b = sort_value_func(b)
+                    const value_a = this.sort_col.sort_value_func(a.data)
+                    const value_b = this.sort_col.sort_value_func(b.data)
 
                     return (value_a === value_b ? 0 : value_a > value_b ? 1 : -1) * (this.sort_descending ? -1 : 1)
                 })
-                .flatMap((d) => {
-                    const row = this.tbody.insertRow()
-                    row.classList.add('dataRow')
-                    row.replaceChildren(
-                        ...this.table_column_list.map((col) => {
-                            const cell = row.insertCell()
-                            cell.replaceChildren(col.element_func(d))
-
-                            return cell
-                        }),
-                    )
-
-                    return row
-                }),
+                .map((x) => x.tr),
         )
     }
 }

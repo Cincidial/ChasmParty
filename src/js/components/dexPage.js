@@ -20,9 +20,10 @@ class SortOption {
 
 // This is the target set of data that the filter will be used on
 class TargetData {
-    constructor(dex_page, option_id, table, data) {
+    constructor(dex_page, option_id, id_func, table, data) {
         this.option_id = option_id
         this.option_element = dex_page.getElementById(this.option_id)
+        this.id_func = id_func
         this.table = table
         this.data = data
 
@@ -57,6 +58,7 @@ class DexPage extends HTMLElement {
             new TargetData(
                 this,
                 'filter_show_pokemon',
+                (x) => x._ID,
                 new Table().setup([
                     new TableColumn(
                         'Dex #',
@@ -151,6 +153,7 @@ class DexPage extends HTMLElement {
 
                     return true
                 }),
+                this.current_target_data.id_func,
             ),
         )
 
