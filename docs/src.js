@@ -641,6 +641,20 @@ class DexPage extends HTMLElement {
                 ]),
                 Object.values(pbs_data.pokemon),
             ),
+            new TargetData(
+                this,
+                'filter_show_abilities',
+                (x) => x._ID,
+                new Table().setup([
+                    new TableColumn(
+                        'Name',
+                        (x) => x._Data.Name,
+                        (x) => x._Data.Name,
+                    ),
+                    new TableColumn('Description', (x) => x._Data.Description),
+                ]),
+                Object.values(pbs_data.abilities),
+            ),
         ]
 
         this.current_filter_form_card = null
@@ -917,10 +931,29 @@ class FilterConfig {
 
 document.addEventListener('DOMContentLoaded', () => getServerData())
 
-var sprite_atlas_img
-var sprite_atlas_data = {}
-var rx_data = {}
-var pbs_data = {}
+let inputEventTypingTimeoutId = undefined // Delay all input typing events so the list doesn't refresh while typing (bigger lists cause lost keypresses)
+document.addEventListener(
+    'input',
+    (event) => {
+        if (!event.isTrusted || event.type !== 'input') {
+            return
+        }
+
+        event.stopImmediatePropagation()
+        clearTimeout(inputEventTypingTimeoutId)
+
+        inputEventTypingTimeoutId = setTimeout(() => {
+            event.explicitOriginalTarget.dispatchEvent(new Event('input', { bubbles: true }))
+            inputEventTypingTimeoutId = undefined
+        }, 200)
+    },
+    true,
+)
+
+let sprite_atlas_img
+let sprite_atlas_data = {}
+let rx_data = {}
+let pbs_data = {}
 
 async function getServerData() {
     const loadingSplash = document.getElementById('loadingSplash')

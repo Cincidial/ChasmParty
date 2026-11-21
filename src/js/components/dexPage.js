@@ -116,6 +116,20 @@ class DexPage extends HTMLElement {
                 ]),
                 Object.values(pbs_data.pokemon),
             ),
+            new TargetData(
+                this,
+                'filter_show_abilities',
+                (x) => x._ID,
+                new Table().setup([
+                    new TableColumn(
+                        'Name',
+                        (x) => x._Data.Name,
+                        (x) => x._Data.Name,
+                    ),
+                    new TableColumn('Description', (x) => x._Data.Description),
+                ]),
+                Object.values(pbs_data.abilities),
+            ),
         ]
 
         this.current_filter_form_card = null

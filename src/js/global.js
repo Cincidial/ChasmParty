@@ -1,9 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => getServerData())
 
-var sprite_atlas_img
-var sprite_atlas_data = {}
-var rx_data = {}
-var pbs_data = {}
+let inputEventTypingTimeoutId = undefined // Delay all input typing events so the list doesn't refresh while typing (bigger lists cause lost keypresses)
+document.addEventListener(
+    'input',
+    (event) => {
+        if (!event.isTrusted || event.type !== 'input') {
+            return
+        }
+
+        event.stopImmediatePropagation()
+        clearTimeout(inputEventTypingTimeoutId)
+
+        inputEventTypingTimeoutId = setTimeout(() => {
+            event.explicitOriginalTarget.dispatchEvent(new Event('input', { bubbles: true }))
+            inputEventTypingTimeoutId = undefined
+        }, 200)
+    },
+    true,
+)
+
+let sprite_atlas_img
+let sprite_atlas_data = {}
+let rx_data = {}
+let pbs_data = {}
 
 async function getServerData() {
     const loadingSplash = document.getElementById('loadingSplash')
