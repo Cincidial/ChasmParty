@@ -27,7 +27,7 @@ class FilterFormAbilities extends HTMLElement {
         }
 
         if (this.desc_input.value) {
-            filters.push(FilterConfig.AbilityDescFilter(this.desc_input.value, () => (this.name_dropdown.value = '')))
+            filters.push(FilterConfig.AbilityDescFilter(this.desc_input.value, () => (this.desc_input.value = '')))
         }
 
         return filters

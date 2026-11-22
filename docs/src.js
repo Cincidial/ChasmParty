@@ -27,7 +27,7 @@ class FilterFormAbilities extends HTMLElement {
         }
 
         if (this.desc_input.value) {
-            filters.push(FilterConfig.AbilityDescFilter(this.desc_input.value, () => (this.name_dropdown.value = '')))
+            filters.push(FilterConfig.AbilityDescFilter(this.desc_input.value, () => (this.desc_input.value = '')))
         }
 
         return filters
@@ -435,6 +435,10 @@ class TargetData {
             dex_page.updateDisplay()
         }
     }
+
+    onclick() {
+        this.option_element.onclick()
+    }
 }
 
 class DexPage extends HTMLElement {
@@ -528,8 +532,9 @@ class DexPage extends HTMLElement {
                             (x) => x._Data.Name,
                         ),
                         new TableColumn('Description', (x) => x._Data.Description),
+                        new TableColumn('Is Primeval', (x) => (x._Data.IsPrimeval ? '✓' : '')),
                     ],
-                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name)),
+                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.abilities),
             ),
@@ -540,7 +545,7 @@ class DexPage extends HTMLElement {
         this.applied_filters = []
 
         this.setFilterForm(this.filter_form_cards[0])
-        this.current_target_data.option_element.onclick()
+        this.current_target_data.onclick()
     }
 
     updateDisplay() {
@@ -615,8 +620,10 @@ class DexPage extends HTMLElement {
         this.updateDisplay()
     }
 
-    addFilter(filter) {
+    addFilter(filter, nav_to_target_data = null) {
         this.applied_filters.push(filter)
+        if (nav_to_target_data) nav_to_target_data.onclick()
+
         this.updateDisplay()
     }
 
@@ -910,6 +917,8 @@ class FilterConfig {
                 case PbsPokemon:
                     const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
                     return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                case PbsAbility:
+                    return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
             }
 
             return false
@@ -922,6 +931,8 @@ class FilterConfig {
                 case PbsPokemon:
                     const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
                     return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                case PbsAbility:
+                    return fv.some((x) => d._Data.Description.toLowerCase().includes(x.toLowerCase()))
             }
 
             return false

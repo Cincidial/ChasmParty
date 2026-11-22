@@ -106,6 +106,8 @@ class FilterConfig {
                 case PbsPokemon:
                     const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
                     return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                case PbsAbility:
+                    return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
             }
 
             return false
@@ -118,6 +120,8 @@ class FilterConfig {
                 case PbsPokemon:
                     const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
                     return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                case PbsAbility:
+                    return fv.some((x) => d._Data.Description.toLowerCase().includes(x.toLowerCase()))
             }
 
             return false

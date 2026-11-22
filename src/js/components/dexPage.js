@@ -35,6 +35,10 @@ class TargetData {
             dex_page.updateDisplay()
         }
     }
+
+    onclick() {
+        this.option_element.onclick()
+    }
 }
 
 class DexPage extends HTMLElement {
@@ -128,8 +132,9 @@ class DexPage extends HTMLElement {
                             (x) => x._Data.Name,
                         ),
                         new TableColumn('Description', (x) => x._Data.Description),
+                        new TableColumn('Is Primeval', (x) => (x._Data.IsPrimeval ? '✓' : '')),
                     ],
-                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name)),
+                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.abilities),
             ),
@@ -140,7 +145,7 @@ class DexPage extends HTMLElement {
         this.applied_filters = []
 
         this.setFilterForm(this.filter_form_cards[0])
-        this.current_target_data.option_element.onclick()
+        this.current_target_data.onclick()
     }
 
     updateDisplay() {
@@ -215,8 +220,10 @@ class DexPage extends HTMLElement {
         this.updateDisplay()
     }
 
-    addFilter(filter) {
+    addFilter(filter, nav_to_target_data = null) {
         this.applied_filters.push(filter)
+        if (nav_to_target_data) nav_to_target_data.onclick()
+
         this.updateDisplay()
     }
 
