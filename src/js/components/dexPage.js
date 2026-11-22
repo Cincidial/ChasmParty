@@ -50,9 +50,9 @@ class DexPage extends HTMLElement {
         this.add_filter_button.onclick = () => this.addCurrentFilter()
 
         this.filter_form_cards = [
-            new FilterFormCard(this, 'filter_option_pokemon', () => new PokemonFilterForm()),
-            new FilterFormCard(this, 'filter_option_ability', () => new AbilityFilterForm()),
-            new FilterFormCard(this, 'filter_option_move', () => new PokemonFilterForm()),
+            new FilterFormCard(this, 'filter_option_pokemon', () => new FilterFormPokemon()),
+            new FilterFormCard(this, 'filter_option_ability', () => new FilterFormAbilities()),
+            new FilterFormCard(this, 'filter_option_move', () => new FilterFormPokemon()),
         ]
         this.target_data_list = [
             new TargetData(
@@ -120,14 +120,17 @@ class DexPage extends HTMLElement {
                 this,
                 'filter_show_abilities',
                 (x) => x._ID,
-                new Table().setup([
-                    new TableColumn(
-                        'Name',
-                        (x) => x._Data.Name,
-                        (x) => x._Data.Name,
-                    ),
-                    new TableColumn('Description', (x) => x._Data.Description),
-                ]),
+                new Table().setup(
+                    [
+                        new TableColumn(
+                            'Name',
+                            (x) => x._Data.Name,
+                            (x) => x._Data.Name,
+                        ),
+                        new TableColumn('Description', (x) => x._Data.Description),
+                    ],
+                    (x) => console.log(x),
+                ),
                 Object.values(pbs_data.abilities),
             ),
         ]

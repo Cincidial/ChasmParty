@@ -1,7 +1,7 @@
-class PokemonFilterForm extends HTMLElement {
+class FilterFormPokemon extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, 'party-pokemon-filter-form-template')
+        setupElement(this, 'party-filter-form-pokemon-template')
 
         this.generation_select = this.getElementById('generation_select')
         this.generation_select.replaceChildren(
@@ -144,4 +144,4 @@ class PokemonFilterForm extends HTMLElement {
         return filters
     }
 }
-customElements.define('party-pokemon-filter-form', PokemonFilterForm)
+customElements.define('party-filter-form-pokemon', FilterFormPokemon)

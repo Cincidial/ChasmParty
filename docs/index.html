@@ -92,6 +92,12 @@
             background-color: #4d5d69;
         }
 
+        tbody tr[has-onclick]:hover {
+            color: #38393b;
+            background-color: #e8eadd;
+            cursor: pointer;
+        }
+
         td {
             font-size: 17px;
             padding: 2px 7px;
@@ -112,6 +118,44 @@
         <thead id="thead"></thead>
         <tbody id="tbody"></tbody>
     </table>
+</template>
+
+<template id="party-filter-form-pokemon-template">
+    <style></style>
+    <div>
+        <label>
+            Generation
+            <select id="generation_select"></select>
+        </label>
+        <party-checkbox id="only_legendary_checkbox">Only Legendaries</party-checkbox>
+        <party-checkbox id="hide_legendary_checkbox">Hide Legendaries</party-checkbox>
+    </div>
+
+    <div>
+        <label>
+            Evolution
+            <select id="evolution_select">
+                <option value="Any">Any</option>
+                <option value="First">First</option>
+                <option value="Final">Final</option>
+                <option value="Single">Single</option>
+            </select>
+        </label>
+
+        <party-checkbox id="starter_only_checkbox">Starters Only</party-checkbox>
+        <party-drop-down id="search_dropdown" placeholder="Enter a Pokémon"></party-drop-down>
+    </div>
+</template>
+
+<template id="party-filter-form-abilities-template">
+    <style></style>
+    <div>
+        <party-checkbox id="is_primival_checkbox">Is Primeval</party-checkbox>
+    </div>
+    <div>
+        <party-drop-down id="name_dropdown" placeholder="Ability Name"></party-drop-down>
+        <input id="desc_input" placeholder="Ability Description" />
+    </div>
 </template>
 
 <template id="party-filter-group-display-template">
@@ -264,33 +308,6 @@
     <input id="list" list="data" />
 </template>
 
-<template id="party-pokemon-filter-form-template">
-    <style></style>
-    <div>
-        <label>
-            Generation
-            <select id="generation_select"></select>
-        </label>
-        <party-checkbox id="only_legendary_checkbox">Only Legendaries</party-checkbox>
-        <party-checkbox id="hide_legendary_checkbox">Hide Legendaries</party-checkbox>
-    </div>
-
-    <div>
-        <label>
-            Evolution
-            <select id="evolution_select">
-                <option value="Any">Any</option>
-                <option value="First">First</option>
-                <option value="Final">Final</option>
-                <option value="Single">Single</option>
-            </select>
-        </label>
-
-        <party-checkbox id="starter_only_checkbox">Starters Only</party-checkbox>
-        <party-drop-down id="search_dropdown" placeholder="Enter a Pokémon"></party-drop-down>
-    </div>
-</template>
-
 <template id="party-atlas-img-template">
     <style>
         .div_image {
@@ -320,17 +337,6 @@
         }
     </style>
     <span id="header"><slot></slot></span>
-</template>
-
-<template id="party-ability-filter-form-template">
-    <style></style>
-    <div>
-        <party-checkbox id="is_primival_checkbox">Is Primeval</party-checkbox>
-    </div>
-    <div>
-        <party-drop-down id="name_dropdown" placeholder="Ability Name"></party-drop-down>
-        <input id="desc_input" placeholder="Ability Description" />
-    </div>
 </template>
 
 </html>

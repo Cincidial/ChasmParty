@@ -1,3 +1,87 @@
+class FilterFormAbilities extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-filter-form-abilities-template')
+
+        this.is_primival_checkbox = this.getElementById('is_primival_checkbox')
+        this.name_dropdown = this.getElementById('name_dropdown')
+        this.desc_input = this.getElementById('desc_input')
+
+        this.name_dropdown.populate(Object.values(pbs_data.abilities).map((x) => x._Data.Name))
+    }
+
+    set on_change(func) {
+        this.is_primival_checkbox.onchange = func
+        this.name_dropdown.onchange = func
+        this.desc_input.oninput = func
+    }
+
+    get sort_id() {
+        return undefined
+    }
+
+    set sort_id(id) {}
+
+    getFilters() {
+        const filters = []
+        if (this.is_primival_checkbox.checked) {
+            filters.push(
+                new FilterConfig(
+                    'Primeval Ability',
+                    true,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsAbility:
+                                return fv.includes(true) && d._Data.IsPrimeval
+                        }
+                        return false
+                    },
+                    () => (this.is_primival_checkbox.checked = false),
+                ),
+            )
+        }
+
+        if (this.name_dropdown.value) {
+            filters.push(
+                new FilterConfig(
+                    'Abilty Name',
+                    this.name_dropdown.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
+                                return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
+                        }
+                        return false
+                    },
+                    () => (this.name_dropdown.value = ''),
+                ),
+            )
+        }
+
+        if (this.desc_input.value) {
+            filters.push(
+                new FilterConfig(
+                    'Ability Description',
+                    this.desc_input.value,
+                    (d, fv) => {
+                        switch (d.constructor) {
+                            case PbsPokemon:
+                                const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
+                                return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
+                        }
+                        return false
+                    },
+                    () => (this.name_dropdown.value = ''),
+                ),
+            )
+        }
+
+        return filters
+    }
+}
+customElements.define('party-filter-form-abilities', FilterFormAbilities)
+
 class Checkbox extends HTMLElement {
     constructor() {
         super()
@@ -20,10 +104,53 @@ class Checkbox extends HTMLElement {
 }
 customElements.define('party-checkbox', Checkbox)
 
-class PokemonFilterForm extends HTMLElement {
+class LoadingSplash extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, 'party-pokemon-filter-form-template')
+        setupElement(this, "party-loading-splash-template")
+    }
+}
+customElements.define("party-loading-splash", LoadingSplash)
+
+class RadioGroup extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-radio-group-template')
+
+        this.container = this.getElementById('container')
+    }
+
+    get checkedKey() {
+        return this.container.children.filter((x) => x.checked)[0].value
+    }
+
+    setup(key_value_list, on_change_func) {
+        this.container.replaceChildren(
+            ...key_value_list.map(([k, v], i) => {
+                const radio = document.createElement('input')
+                radio.type = 'radio'
+                radio.name = 'groupedRadios'
+                radio.value = k
+                radio.onchange = on_change_func
+                radio.checked = i == 0
+
+                const label = document.createElement('label')
+                label.appendChild(document.createTextNode(v))
+                label.appendChild(radio)
+
+                return label
+            }),
+        )
+
+        return this
+    }
+}
+customElements.define('party-radio-group', RadioGroup)
+
+class FilterFormPokemon extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-filter-form-pokemon-template')
 
         this.generation_select = this.getElementById('generation_select')
         this.generation_select.replaceChildren(
@@ -166,134 +293,7 @@ class PokemonFilterForm extends HTMLElement {
         return filters
     }
 }
-customElements.define('party-pokemon-filter-form', PokemonFilterForm)
-
-class LoadingSplash extends HTMLElement {
-    constructor() {
-        super()
-        setupElement(this, "party-loading-splash-template")
-    }
-}
-customElements.define("party-loading-splash", LoadingSplash)
-
-class RadioGroup extends HTMLElement {
-    constructor() {
-        super()
-        setupElement(this, 'party-radio-group-template')
-
-        this.container = this.getElementById('container')
-    }
-
-    get checkedKey() {
-        return this.container.children.filter((x) => x.checked)[0].value
-    }
-
-    setup(key_value_list, on_change_func) {
-        this.container.replaceChildren(
-            ...key_value_list.map(([k, v], i) => {
-                const radio = document.createElement('input')
-                radio.type = 'radio'
-                radio.name = 'groupedRadios'
-                radio.value = k
-                radio.onchange = on_change_func
-                radio.checked = i == 0
-
-                const label = document.createElement('label')
-                label.appendChild(document.createTextNode(v))
-                label.appendChild(radio)
-
-                return label
-            }),
-        )
-
-        return this
-    }
-}
-customElements.define('party-radio-group', RadioGroup)
-
-class AbilityFilterForm extends HTMLElement {
-    constructor() {
-        super()
-        setupElement(this, 'party-ability-filter-form-template')
-
-        this.is_primival_checkbox = this.getElementById('is_primival_checkbox')
-        this.name_dropdown = this.getElementById('name_dropdown')
-        this.desc_input = this.getElementById('desc_input')
-
-        this.name_dropdown.populate(Object.values(pbs_data.abilities).map((x) => x._Data.Name))
-    }
-
-    set on_change(func) {
-        this.is_primival_checkbox.onchange = func
-        this.name_dropdown.onchange = func
-        this.desc_input.oninput = func
-    }
-
-    get sort_id() {
-        return undefined
-    }
-
-    set sort_id(id) {}
-
-    getFilters() {
-        const filters = []
-        if (this.is_primival_checkbox.checked) {
-            filters.push(
-                new FilterConfig(
-                    'Primeval Ability',
-                    true,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsAbility:
-                                return fv.includes(true) && d._Data.IsPrimeval
-                        }
-                        return false
-                    },
-                    () => (this.is_primival_checkbox.checked = false),
-                ),
-            )
-        }
-
-        if (this.name_dropdown.value) {
-            filters.push(
-                new FilterConfig(
-                    'Abilty Name',
-                    this.name_dropdown.value,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                const ability_names = d.abilities.map((a) => a._Data.Name.toLowerCase())
-                                return fv.some((x) => ability_names.some((a) => a.includes(x.toLowerCase())))
-                        }
-                        return false
-                    },
-                    () => (this.name_dropdown.value = ''),
-                ),
-            )
-        }
-
-        if (this.desc_input.value) {
-            filters.push(
-                new FilterConfig(
-                    'Ability Description',
-                    this.desc_input.value,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                const ability_descs = d.abilities.map((a) => a._Data.Description.toLowerCase())
-                                return fv.some((x) => ability_descs.some((a) => a.includes(x.toLowerCase())))
-                        }
-                        return false
-                    },
-                    () => (this.name_dropdown.value = ''),
-                ),
-            )
-        }
-
-        return filters
-    }
-}
-customElements.define('party-ability-filter-form', AbilityFilterForm)
+customElements.define('party-filter-form-pokemon', FilterFormPokemon)
 
 class VerticalStack extends HTMLElement {
     constructor() {
@@ -435,39 +435,16 @@ class Table extends HTMLElement {
         this.tbody = this.getElementById('tbody')
 
         this.table_column_list = []
+        this.row_onclick_func = null
         this.table_row_list = null
         this.sort_descending = false
         this.sort_col = null
         this.cached_table_rows = {} // The table uses on the website are read-only, so we can assume the row generated for an input ID is always going to look the same
     }
 
-    setData(data, id_func) {
-        this.table_row_list = data.map((d) => {
-            if (!Object.hasOwn(this.cached_table_rows, id_func(d))) {
-                const tr = this.tbody.insertRow()
-                tr.classList.add('dataRow')
-                tr.replaceChildren(
-                    ...this.table_column_list.map((col) => {
-                        const cell = tr.insertCell()
-                        cell.replaceChildren(col.element_func(d))
-
-                        return cell
-                    }),
-                )
-
-                this.cached_table_rows[id_func(d)] = new TableRow(d, tr)
-            }
-
-            this.cached_table_rows[id_func(d)].data = d
-            return this.cached_table_rows[id_func(d)]
-        })
-        this.updateBody()
-
-        return this
-    }
-
-    setup(table_column_list) {
+    setup(table_column_list, row_onclick_func) {
         this.table_column_list = table_column_list
+        this.row_onclick_func = row_onclick_func
         this.sort_descending = false
 
         const header_row = this.thead.insertRow()
@@ -504,6 +481,35 @@ class Table extends HTMLElement {
                 return th
             }),
         )
+
+        return this
+    }
+
+    setData(data, id_func) {
+        this.table_row_list = data.map((d) => {
+            if (!Object.hasOwn(this.cached_table_rows, id_func(d))) {
+                const tr = this.tbody.insertRow()
+                tr.classList.add('dataRow')
+                tr.replaceChildren(
+                    ...this.table_column_list.map((col) => {
+                        const cell = tr.insertCell()
+                        cell.replaceChildren(col.element_func(d))
+
+                        return cell
+                    }),
+                )
+                if (this.row_onclick_func) {
+                    tr.onclick = () => this.row_onclick_func(d)
+                    tr.setAttribute('has-onclick', '')
+                }
+
+                this.cached_table_rows[id_func(d)] = new TableRow(d, tr)
+            }
+
+            this.cached_table_rows[id_func(d)].data = d
+            return this.cached_table_rows[id_func(d)]
+        })
+        this.updateBody()
 
         return this
     }
@@ -575,9 +581,9 @@ class DexPage extends HTMLElement {
         this.add_filter_button.onclick = () => this.addCurrentFilter()
 
         this.filter_form_cards = [
-            new FilterFormCard(this, 'filter_option_pokemon', () => new PokemonFilterForm()),
-            new FilterFormCard(this, 'filter_option_ability', () => new AbilityFilterForm()),
-            new FilterFormCard(this, 'filter_option_move', () => new PokemonFilterForm()),
+            new FilterFormCard(this, 'filter_option_pokemon', () => new FilterFormPokemon()),
+            new FilterFormCard(this, 'filter_option_ability', () => new FilterFormAbilities()),
+            new FilterFormCard(this, 'filter_option_move', () => new FilterFormPokemon()),
         ]
         this.target_data_list = [
             new TargetData(
@@ -645,14 +651,17 @@ class DexPage extends HTMLElement {
                 this,
                 'filter_show_abilities',
                 (x) => x._ID,
-                new Table().setup([
-                    new TableColumn(
-                        'Name',
-                        (x) => x._Data.Name,
-                        (x) => x._Data.Name,
-                    ),
-                    new TableColumn('Description', (x) => x._Data.Description),
-                ]),
+                new Table().setup(
+                    [
+                        new TableColumn(
+                            'Name',
+                            (x) => x._Data.Name,
+                            (x) => x._Data.Name,
+                        ),
+                        new TableColumn('Description', (x) => x._Data.Description),
+                    ],
+                    (x) => console.log(x),
+                ),
                 Object.values(pbs_data.abilities),
             ),
         ]

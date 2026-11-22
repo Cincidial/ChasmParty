@@ -1,7 +1,7 @@
-class AbilityFilterForm extends HTMLElement {
+class FilterFormAbilities extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, 'party-ability-filter-form-template')
+        setupElement(this, 'party-filter-form-abilities-template')
 
         this.is_primival_checkbox = this.getElementById('is_primival_checkbox')
         this.name_dropdown = this.getElementById('name_dropdown')
@@ -80,4 +80,4 @@ class AbilityFilterForm extends HTMLElement {
         return filters
     }
 }
-customElements.define('party-ability-filter-form', AbilityFilterForm)
+customElements.define('party-filter-form-abilities', FilterFormAbilities)

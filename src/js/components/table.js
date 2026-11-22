@@ -24,39 +24,16 @@ class Table extends HTMLElement {
         this.tbody = this.getElementById('tbody')
 
         this.table_column_list = []
+        this.row_onclick_func = null
         this.table_row_list = null
         this.sort_descending = false
         this.sort_col = null
         this.cached_table_rows = {} // The table uses on the website are read-only, so we can assume the row generated for an input ID is always going to look the same
     }
 
-    setData(data, id_func) {
-        this.table_row_list = data.map((d) => {
-            if (!Object.hasOwn(this.cached_table_rows, id_func(d))) {
-                const tr = this.tbody.insertRow()
-                tr.classList.add('dataRow')
-                tr.replaceChildren(
-                    ...this.table_column_list.map((col) => {
-                        const cell = tr.insertCell()
-                        cell.replaceChildren(col.element_func(d))
-
-                        return cell
-                    }),
-                )
-
-                this.cached_table_rows[id_func(d)] = new TableRow(d, tr)
-            }
-
-            this.cached_table_rows[id_func(d)].data = d
-            return this.cached_table_rows[id_func(d)]
-        })
-        this.updateBody()
-
-        return this
-    }
-
-    setup(table_column_list) {
+    setup(table_column_list, row_onclick_func) {
         this.table_column_list = table_column_list
+        this.row_onclick_func = row_onclick_func
         this.sort_descending = false
 
         const header_row = this.thead.insertRow()
@@ -93,6 +70,35 @@ class Table extends HTMLElement {
                 return th
             }),
         )
+
+        return this
+    }
+
+    setData(data, id_func) {
+        this.table_row_list = data.map((d) => {
+            if (!Object.hasOwn(this.cached_table_rows, id_func(d))) {
+                const tr = this.tbody.insertRow()
+                tr.classList.add('dataRow')
+                tr.replaceChildren(
+                    ...this.table_column_list.map((col) => {
+                        const cell = tr.insertCell()
+                        cell.replaceChildren(col.element_func(d))
+
+                        return cell
+                    }),
+                )
+                if (this.row_onclick_func) {
+                    tr.onclick = () => this.row_onclick_func(d)
+                    tr.setAttribute('has-onclick', '')
+                }
+
+                this.cached_table_rows[id_func(d)] = new TableRow(d, tr)
+            }
+
+            this.cached_table_rows[id_func(d)].data = d
+            return this.cached_table_rows[id_func(d)]
+        })
+        this.updateBody()
 
         return this
     }
