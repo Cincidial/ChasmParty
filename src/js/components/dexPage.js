@@ -129,7 +129,7 @@ class DexPage extends HTMLElement {
                         ),
                         new TableColumn('Description', (x) => x._Data.Description),
                     ],
-                    (x) => console.log(x),
+                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name)),
                 ),
                 Object.values(pbs_data.abilities),
             ),
@@ -212,6 +212,11 @@ class DexPage extends HTMLElement {
         this.current_filter_form_card.in_progress_form.on_change = () => this.updateDisplay()
 
         this.filter_form.replaceChildren(this.current_filter_form_card.in_progress_form)
+        this.updateDisplay()
+    }
+
+    addFilter(filter) {
+        this.applied_filters.push(filter)
         this.updateDisplay()
     }
 
