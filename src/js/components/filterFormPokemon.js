@@ -34,111 +34,27 @@ class FilterFormPokemon extends HTMLElement {
     getFilters() {
         const filters = []
         if (this.generation_select.value != 'Any') {
-            filters.push(
-                new FilterConfig(
-                    'Generation',
-                    this.generation_select.value,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                return fv.includes(`${d._Data.Generation ?? -1}`)
-                        }
-
-                        return false
-                    },
-                    () => (this.generation_select.value = 'Any'),
-                ),
-            )
+            filters.push(FilterConfig.PokemonGenerationFilter(this.generation_select.value, () => (this.generation_select.value = 'Any')))
         }
 
         if (this.evolution_select.value != 'Any') {
-            filters.push(
-                new FilterConfig(
-                    'Evolution',
-                    this.evolution_select.value,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                if (fv.includes('First') && d.is_first_stage) return true
-                                if (fv.includes('Final') && d.is_final_stage) return true
-                                if (fv.includes('Single') && d.has_no_evo_line) return true
-                                break
-                        }
-
-                        return false
-                    },
-                    () => (this.evolution_select.value = 'Any'),
-                ),
-            )
+            filters.push(FilterConfig.PokemonEvolutionFilter(this.evolution_select.value, () => (this.evolution_select.value = 'Any')))
         }
 
         if (this.only_legendary_checkbox.checked) {
-            filters.push(
-                new FilterConfig(
-                    'Only Legends',
-                    true,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                return fv.includes(true) && d.is_legend
-                        }
-                        return false
-                    },
-                    () => (this.only_legendary_checkbox.checked = false),
-                ),
-            )
+            filters.push(FilterConfig.PokemonOnlyLegendsFilter(true, () => (this.only_legendary_checkbox.checked = false)))
         }
 
         if (this.hide_legendary_checkbox.checked) {
-            filters.push(
-                new FilterConfig(
-                    'Hide Legends',
-                    true,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                return fv.includes(true) && !d.is_legend
-                        }
-
-                        return false
-                    },
-                    () => (this.hide_legendary_checkbox.checked = false),
-                ),
-            )
+            filters.push(FilterConfig.PokemonHideLegendsFilter(true, () => (this.hide_legendary_checkbox.checked = false)))
         }
 
         if (this.starter_only_checkbox.checked) {
-            filters.push(
-                new FilterConfig(
-                    'Starters Only',
-                    true,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                return fv.includes(true) && d.is_starter
-                        }
-                        return false
-                    },
-                    () => (this.starter_only_checkbox.checked = false),
-                ),
-            )
+            filters.push(FilterConfig.PokemonStartersOnlyFilter(true, () => (this.starter_only_checkbox.checked = false)))
         }
 
         if (this.search_dropdown.value) {
-            filters.push(
-                new FilterConfig(
-                    'Pokemon Search',
-                    this.search_dropdown.value,
-                    (d, fv) => {
-                        switch (d.constructor) {
-                            case PbsPokemon:
-                                return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
-                        }
-                        return false
-                    },
-                    () => (this.search_dropdown.value = ''),
-                ),
-            )
+            filters.push(FilterConfig.PokemonSearchFilter(this.search_dropdown.value, () => (this.search_dropdown.value = '')))
         }
 
         return filters
