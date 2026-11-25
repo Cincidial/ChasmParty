@@ -35,6 +35,43 @@ class FilterFormAbilities extends HTMLElement {
 }
 customElements.define('party-filter-form-abilities', FilterFormAbilities)
 
+class FilterFormMoves extends HTMLElement {
+    constructor() {
+        super()
+        setupElement(this, 'party-filter-form-moves-template')
+
+        this.is_primival_checkbox = this.getElementById('is_primival_checkbox')
+        this.name_dropdown = this.getElementById('name_dropdown')
+        this.desc_input = this.getElementById('desc_input')
+
+        this.name_dropdown.populate(Object.values(pbs_data.moves).map((x) => x._Data.Name))
+    }
+
+    set on_change(func) {
+        this.is_primival_checkbox.onchange = func
+        this.name_dropdown.onchange = func
+        this.desc_input.oninput = func
+    }
+
+    getFilters() {
+        const filters = []
+        if (this.is_primival_checkbox.checked) {
+            filters.push(FilterConfig.MovePrimevalFilter(true, () => (this.is_primival_checkbox.checked = false)))
+        }
+
+        if (this.name_dropdown.value) {
+            filters.push(FilterConfig.MoveNameFilter(this.name_dropdown.value, () => (this.name_dropdown.value = '')))
+        }
+
+        if (this.desc_input.value) {
+            filters.push(FilterConfig.MoveDescFilter(this.desc_input.value, () => (this.desc_input.value = '')))
+        }
+
+        return filters
+    }
+}
+customElements.define('party-filter-form-moves', FilterFormMoves)
+
 class Checkbox extends HTMLElement {
     constructor() {
         super()
@@ -262,6 +299,14 @@ function getTypeIcon(id, scale = 0.25) {
     return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, scale, pbs_data.types[id]._Data.Name)
 }
 
+function getCategoryIcon(id, scale = 1.0) {
+    const w = sprite_atlas_data.MoveCategory.w
+    const h = sprite_atlas_data.MoveCategory.h
+    const data = sprite_atlas_data.MoveCategory[id]
+
+    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, scale, id)
+}
+
 function getPokemonIconImg(id) {
     const w = sprite_atlas_data.Icon.w
     const h = sprite_atlas_data.Icon.h
@@ -456,7 +501,7 @@ class DexPage extends HTMLElement {
         this.filter_form_cards = [
             new FilterFormCard(this, 'filter_option_pokemon', () => new FilterFormPokemon()),
             new FilterFormCard(this, 'filter_option_ability', () => new FilterFormAbilities()),
-            new FilterFormCard(this, 'filter_option_move', () => new FilterFormPokemon()),
+            new FilterFormCard(this, 'filter_option_move', () => new FilterFormMoves()),
         ]
         this.target_data_list = [
             new TargetData(
@@ -532,11 +577,73 @@ class DexPage extends HTMLElement {
                             (x) => x._Data.Name,
                         ),
                         new TableColumn('Description', (x) => x._Data.Description),
-                        new TableColumn('Is Primeval', (x) => (x._Data.IsPrimeval ? '✓' : '')),
+                        new TableColumn('Is Primeval', (x) => isPrimevalTextDisplay(x._Data.IsPrimeval)),
                     ],
                     (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.abilities),
+            ),
+            new TargetData(
+                this,
+                'filter_show_moves',
+                (x) => x._ID,
+                new Table().setup(
+                    [
+                        new TableColumn(
+                            'Name',
+                            (x) => x._Data.Name ?? '',
+                            (x) => x._Data.Name ?? '',
+                        ),
+                        new TableColumn(
+                            'Type',
+                            (x) => x.type.img_icon ?? '',
+                            (x) => x._Data.Type ?? '',
+                        ),
+                        new TableColumn(
+                            'Category',
+                            (x) => x.category_icon ?? '',
+                            (x) => x._Data.Category ?? '',
+                        ),
+                        new TableColumn(
+                            'Pow',
+                            (x) => x._Data.Power ?? '',
+                            (x) => x._Data.Power ?? '',
+                        ),
+                        new TableColumn(
+                            'Acc',
+                            (x) => x._Data.Accuracy ?? '',
+                            (x) => x._Data.Accuracy ?? '',
+                        ),
+                        new TableColumn(
+                            'PP',
+                            (x) => x._Data.TotalPP ?? '',
+                            (x) => x._Data.TotalPP ?? '',
+                        ),
+                        new TableColumn(
+                            'Prio',
+                            (x) => (x._Data.Priority == undefined || x._Data.Priority == 0 ? '' : x._Data.Priority),
+                            (x) => (x._Data.Priority == undefined || x._Data.Priority == 0 ? '' : x._Data.Priority),
+                        ),
+                        new TableColumn(
+                            'Flags',
+                            (x) => x._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? '',
+                            (x) => x._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? '',
+                        ),
+                        new TableColumn(
+                            '%',
+                            (x) => (x._Data.EffectChance == undefined || x._Data.EffectChance == 100 ? '' : x._Data.EffectChance),
+                            (x) => (x._Data.EffectChance == undefined || x._Data.EffectChance == 100 ? '' : x._Data.EffectChance),
+                        ),
+                        new TableColumn(
+                            'Primeval',
+                            (x) => isPrimevalTextDisplay(x._Data.IsPrimeval),
+                            (x) => isPrimevalTextDisplay(x._Data.IsPrimeval),
+                        ),
+                        new TableColumn('Description', (x) => x._Data.Description ?? ''),
+                    ],
+                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
+                ),
+                Object.values(pbs_data.moves),
             ),
         ]
 
@@ -748,6 +855,13 @@ class TextWithTooltip {
     }
 }
 
+class PbsPokemonLevelMove {
+    constructor(lvl, id) {
+        this.lvl = lvl
+        this.move = pbs_data.moves[id]
+    }
+}
+
 class PbsPokemon {
     constructor(k, v, i) {
         setPbsBaseMembers(this, k, v)
@@ -764,6 +878,10 @@ class PbsPokemon {
         this.is_first_stage = this._Data.Prevo == undefined && this._Data.Evolutions
         this.is_final_stage = this._Data.Prevo && this._Data.Evolutions == undefined
         this.has_no_evo_line = this._Data.Prevo == undefined && this._Data.Evolutions == undefined
+        this.level_moves = this._Data.Moves?.map((x) => new PbsPokemonLevelMove(x.Lvl, x.ID)) ?? []
+        this.teachable_moves = this._Data.LineMoves?.map((x) => pbs_data.moves[x]) ?? []
+        this.evo_moves = this._Data.UponEvoMoves?.map((x) => pbs_data.moves[x]) ?? []
+        this.all_moves = [...new Set([...this.level_moves.map((x) => x.move), ...this.teachable_moves, ...this.evo_moves])]
     }
 
     get img_icon() {
@@ -806,6 +924,18 @@ class PbsType {
 
     get img_icon() {
         return getTypeIcon(this._ID)
+    }
+}
+
+class PbsMove {
+    constructor(k, v) {
+        setPbsBaseMembers(this, k, v)
+
+        this.type = pbs_data.types[this._Data.Type]
+    }
+
+    get category_icon() {
+        return getCategoryIcon(this._Data.Category)
     }
 }
 
@@ -938,6 +1068,45 @@ class FilterConfig {
             return false
         })
     }
+
+    static MovePrimevalFilter(value, in_prog_reset_func = null) {
+        return new FilterConfig('Primeval Move', value, in_prog_reset_func, (d, fv) => {
+            switch (d.constructor) {
+                case PbsMove:
+                    return fv.includes(true) && d._Data.IsPrimeval
+            }
+
+            return false
+        })
+    }
+
+    static MoveNameFilter(value, in_prog_reset_func = null) {
+        return new FilterConfig('Move Name', value, in_prog_reset_func, (d, fv) => {
+            switch (d.constructor) {
+                case PbsPokemon:
+                    const names = d.all_moves.map((x) => x._Data.Name.toLowerCase())
+                    return fv.some((x) => names.some((y) => y.includes(x.toLowerCase())))
+                case PbsMove:
+                    return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
+            }
+
+            return false
+        })
+    }
+
+    static MoveDescFilter(value, in_prog_reset_func = null) {
+        return new FilterConfig('Move Description', value, in_prog_reset_func, (d, fv) => {
+            switch (d.constructor) {
+                case PbsPokemon:
+                    const names = d.all_moves.map((x) => x._Data.Description.toLowerCase())
+                    return fv.some((x) => names.some((y) => y.includes(x.toLowerCase())))
+                case PbsMove:
+                    return fv.some((x) => d._Data.Description.toLowerCase().includes(x.toLowerCase()))
+            }
+
+            return false
+        })
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => getServerData())
@@ -965,6 +1134,39 @@ let sprite_atlas_img
 let sprite_atlas_data = {}
 let rx_data = {}
 let pbs_data = {}
+let local_data = {
+    ignored_move_flags: [
+        'CanProtect',
+        'ForceSignature',
+        'Uninvocable',
+        'Staple',
+        'HalfDamageToAllies',
+        'AvatarSignature',
+        'Empowered',
+        'CanSnatch',
+        'CanRandomCrit',
+        'DoubleCritChance',
+        'CanMagicCoat',
+        'FakeRandomEffect',
+    ],
+    move_target_text_map: {
+        NearOther: 'Near',
+        User: '',
+        None: '',
+        AllNearOthers: 'All Near',
+        AllNearFoes: 'All Near',
+        UserAndAllies: 'User & Allies',
+        NearAlly: 'Near',
+        NearFoe: 'Near',
+        Ally: '',
+        ClosestNearFoe: '',
+        AllBattlers: 'All',
+        UserSide: '',
+        BothSides: '',
+        FoeSide: '',
+        UserOrNearOther: '',
+    },
+}
 
 async function getServerData() {
     const loadingSplash = document.getElementById('loadingSplash')
@@ -985,6 +1187,7 @@ async function getServerData() {
         pbs_data.types = convertPbsDataListToHash(Object.entries(server_data.PBS.Types).map(([k, v]) => new PbsType(k, v)))
         pbs_data.abilities = convertPbsDataListToHash(Object.entries(server_data.PBS.Abilities).map(([k, v]) => new PbsAbility(k, v)))
         pbs_data.tribes = convertPbsDataListToHash(Object.entries(server_data.PBS.Tribes).map(([k, v]) => new PbsTribe(k, v)))
+        pbs_data.moves = convertPbsDataListToHash(Object.entries(server_data.PBS.Moves).map(([k, v]) => new PbsMove(k, v)))
         pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
 
         // Post-Processing
@@ -1030,6 +1233,10 @@ async function getServerData() {
     } catch (error) {
         console.error(error.message)
     }
+}
+
+function isPrimevalTextDisplay(value) {
+    return value ? '✓' : ''
 }
 
 function setPbsBaseMembers(self, k, v) {

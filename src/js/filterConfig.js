@@ -127,4 +127,43 @@ class FilterConfig {
             return false
         })
     }
+
+    static MovePrimevalFilter(value, in_prog_reset_func = null) {
+        return new FilterConfig('Primeval Move', value, in_prog_reset_func, (d, fv) => {
+            switch (d.constructor) {
+                case PbsMove:
+                    return fv.includes(true) && d._Data.IsPrimeval
+            }
+
+            return false
+        })
+    }
+
+    static MoveNameFilter(value, in_prog_reset_func = null) {
+        return new FilterConfig('Move Name', value, in_prog_reset_func, (d, fv) => {
+            switch (d.constructor) {
+                case PbsPokemon:
+                    const names = d.all_moves.map((x) => x._Data.Name.toLowerCase())
+                    return fv.some((x) => names.some((y) => y.includes(x.toLowerCase())))
+                case PbsMove:
+                    return fv.some((x) => d._Data.Name.toLowerCase().includes(x.toLowerCase()))
+            }
+
+            return false
+        })
+    }
+
+    static MoveDescFilter(value, in_prog_reset_func = null) {
+        return new FilterConfig('Move Description', value, in_prog_reset_func, (d, fv) => {
+            switch (d.constructor) {
+                case PbsPokemon:
+                    const names = d.all_moves.map((x) => x._Data.Description.toLowerCase())
+                    return fv.some((x) => names.some((y) => y.includes(x.toLowerCase())))
+                case PbsMove:
+                    return fv.some((x) => d._Data.Description.toLowerCase().includes(x.toLowerCase()))
+            }
+
+            return false
+        })
+    }
 }

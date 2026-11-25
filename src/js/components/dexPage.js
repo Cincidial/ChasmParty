@@ -56,7 +56,7 @@ class DexPage extends HTMLElement {
         this.filter_form_cards = [
             new FilterFormCard(this, 'filter_option_pokemon', () => new FilterFormPokemon()),
             new FilterFormCard(this, 'filter_option_ability', () => new FilterFormAbilities()),
-            new FilterFormCard(this, 'filter_option_move', () => new FilterFormPokemon()),
+            new FilterFormCard(this, 'filter_option_move', () => new FilterFormMoves()),
         ]
         this.target_data_list = [
             new TargetData(
@@ -132,11 +132,73 @@ class DexPage extends HTMLElement {
                             (x) => x._Data.Name,
                         ),
                         new TableColumn('Description', (x) => x._Data.Description),
-                        new TableColumn('Is Primeval', (x) => (x._Data.IsPrimeval ? '✓' : '')),
+                        new TableColumn('Is Primeval', (x) => isPrimevalTextDisplay(x._Data.IsPrimeval)),
                     ],
                     (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.abilities),
+            ),
+            new TargetData(
+                this,
+                'filter_show_moves',
+                (x) => x._ID,
+                new Table().setup(
+                    [
+                        new TableColumn(
+                            'Name',
+                            (x) => x._Data.Name ?? '',
+                            (x) => x._Data.Name ?? '',
+                        ),
+                        new TableColumn(
+                            'Type',
+                            (x) => x.type.img_icon ?? '',
+                            (x) => x._Data.Type ?? '',
+                        ),
+                        new TableColumn(
+                            'Category',
+                            (x) => x.category_icon ?? '',
+                            (x) => x._Data.Category ?? '',
+                        ),
+                        new TableColumn(
+                            'Pow',
+                            (x) => x._Data.Power ?? '',
+                            (x) => x._Data.Power ?? '',
+                        ),
+                        new TableColumn(
+                            'Acc',
+                            (x) => x._Data.Accuracy ?? '',
+                            (x) => x._Data.Accuracy ?? '',
+                        ),
+                        new TableColumn(
+                            'PP',
+                            (x) => x._Data.TotalPP ?? '',
+                            (x) => x._Data.TotalPP ?? '',
+                        ),
+                        new TableColumn(
+                            'Prio',
+                            (x) => (x._Data.Priority == undefined || x._Data.Priority == 0 ? '' : x._Data.Priority),
+                            (x) => (x._Data.Priority == undefined || x._Data.Priority == 0 ? '' : x._Data.Priority),
+                        ),
+                        new TableColumn(
+                            'Flags',
+                            (x) => x._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? '',
+                            (x) => x._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? '',
+                        ),
+                        new TableColumn(
+                            '%',
+                            (x) => (x._Data.EffectChance == undefined || x._Data.EffectChance == 100 ? '' : x._Data.EffectChance),
+                            (x) => (x._Data.EffectChance == undefined || x._Data.EffectChance == 100 ? '' : x._Data.EffectChance),
+                        ),
+                        new TableColumn(
+                            'Primeval',
+                            (x) => isPrimevalTextDisplay(x._Data.IsPrimeval),
+                            (x) => isPrimevalTextDisplay(x._Data.IsPrimeval),
+                        ),
+                        new TableColumn('Description', (x) => x._Data.Description ?? ''),
+                    ],
+                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
+                ),
+                Object.values(pbs_data.moves),
             ),
         ]
 

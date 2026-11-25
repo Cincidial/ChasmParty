@@ -30,6 +30,14 @@ function getTypeIcon(id, scale = 0.25) {
     return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, scale, pbs_data.types[id]._Data.Name)
 }
 
+function getCategoryIcon(id, scale = 1.0) {
+    const w = sprite_atlas_data.MoveCategory.w
+    const h = sprite_atlas_data.MoveCategory.h
+    const data = sprite_atlas_data.MoveCategory[id]
+
+    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, scale, id)
+}
+
 function getPokemonIconImg(id) {
     const w = sprite_atlas_data.Icon.w
     const h = sprite_atlas_data.Icon.h

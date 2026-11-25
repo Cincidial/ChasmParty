@@ -23,6 +23,39 @@ let sprite_atlas_img
 let sprite_atlas_data = {}
 let rx_data = {}
 let pbs_data = {}
+let local_data = {
+    ignored_move_flags: [
+        'CanProtect',
+        'ForceSignature',
+        'Uninvocable',
+        'Staple',
+        'HalfDamageToAllies',
+        'AvatarSignature',
+        'Empowered',
+        'CanSnatch',
+        'CanRandomCrit',
+        'DoubleCritChance',
+        'CanMagicCoat',
+        'FakeRandomEffect',
+    ],
+    move_target_text_map: {
+        NearOther: 'Near',
+        User: '',
+        None: '',
+        AllNearOthers: 'All Near',
+        AllNearFoes: 'All Near',
+        UserAndAllies: 'User & Allies',
+        NearAlly: 'Near',
+        NearFoe: 'Near',
+        Ally: '',
+        ClosestNearFoe: '',
+        AllBattlers: 'All',
+        UserSide: '',
+        BothSides: '',
+        FoeSide: '',
+        UserOrNearOther: '',
+    },
+}
 
 async function getServerData() {
     const loadingSplash = document.getElementById('loadingSplash')
@@ -43,6 +76,7 @@ async function getServerData() {
         pbs_data.types = convertPbsDataListToHash(Object.entries(server_data.PBS.Types).map(([k, v]) => new PbsType(k, v)))
         pbs_data.abilities = convertPbsDataListToHash(Object.entries(server_data.PBS.Abilities).map(([k, v]) => new PbsAbility(k, v)))
         pbs_data.tribes = convertPbsDataListToHash(Object.entries(server_data.PBS.Tribes).map(([k, v]) => new PbsTribe(k, v)))
+        pbs_data.moves = convertPbsDataListToHash(Object.entries(server_data.PBS.Moves).map(([k, v]) => new PbsMove(k, v)))
         pbs_data.pokemon = convertPbsDataListToHash(Object.entries(server_data.PBS.Pokemon).map(([k, v], i) => new PbsPokemon(k, v, i)))
 
         // Post-Processing
@@ -88,6 +122,10 @@ async function getServerData() {
     } catch (error) {
         console.error(error.message)
     }
+}
+
+function isPrimevalTextDisplay(value) {
+    return value ? '✓' : ''
 }
 
 function setPbsBaseMembers(self, k, v) {

@@ -59,6 +59,7 @@
     <style>
         table {
             border: 1px solid #e8eadd;
+            max-width: 95vw;
         }
 
         th {
@@ -85,7 +86,7 @@
         }
 
         tbody tr:nth-child(odd) {
-            background-color: #69a3d0;
+            background-color: #7d9198;
         }
 
         tbody tr:nth-child(even) {
@@ -103,9 +104,7 @@
             padding: 2px 7px;
             text-align: center;
             vertical-align: middle;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            overflow-wrap: break-word;
         }
 
         td > * {
@@ -337,6 +336,17 @@
         }
     </style>
     <span id="header"><slot></slot></span>
+</template>
+
+<template id="party-filter-form-moves-template">
+    <style></style>
+    <div>
+        <party-checkbox id="is_primival_checkbox">Is Primeval</party-checkbox>
+    </div>
+    <div>
+        <party-drop-down id="name_dropdown" placeholder="Move Name"></party-drop-down>
+        <input id="desc_input" placeholder="Move Description" />
+    </div>
 </template>
 
 </html>

@@ -1,3 +1,10 @@
+class PbsPokemonLevelMove {
+    constructor(lvl, id) {
+        this.lvl = lvl
+        this.move = pbs_data.moves[id]
+    }
+}
+
 class PbsPokemon {
     constructor(k, v, i) {
         setPbsBaseMembers(this, k, v)
@@ -14,6 +21,10 @@ class PbsPokemon {
         this.is_first_stage = this._Data.Prevo == undefined && this._Data.Evolutions
         this.is_final_stage = this._Data.Prevo && this._Data.Evolutions == undefined
         this.has_no_evo_line = this._Data.Prevo == undefined && this._Data.Evolutions == undefined
+        this.level_moves = this._Data.Moves?.map((x) => new PbsPokemonLevelMove(x.Lvl, x.ID)) ?? []
+        this.teachable_moves = this._Data.LineMoves?.map((x) => pbs_data.moves[x]) ?? []
+        this.evo_moves = this._Data.UponEvoMoves?.map((x) => pbs_data.moves[x]) ?? []
+        this.all_moves = [...new Set([...this.level_moves.map((x) => x.move), ...this.teachable_moves, ...this.evo_moves])]
     }
 
     get img_icon() {
