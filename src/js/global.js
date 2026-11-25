@@ -14,7 +14,7 @@ document.addEventListener(
         inputEventTypingTimeoutId = setTimeout(() => {
             event.explicitOriginalTarget.dispatchEvent(new Event('input', { bubbles: true }))
             inputEventTypingTimeoutId = undefined
-        }, 200)
+        }, 300)
     },
     true,
 )

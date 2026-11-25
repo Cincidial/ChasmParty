@@ -641,7 +641,7 @@ class DexPage extends HTMLElement {
                         ),
                         new TableColumn('Description', (x) => x._Data.Description ?? ''),
                     ],
-                    (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
+                    (x) => this.addFilter(FilterConfig.MoveNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.moves),
             ),
@@ -729,7 +729,10 @@ class DexPage extends HTMLElement {
 
     addFilter(filter, nav_to_target_data = null) {
         this.applied_filters.push(filter)
-        if (nav_to_target_data) nav_to_target_data.onclick()
+        if (nav_to_target_data) {
+            nav_to_target_data.onclick()
+            window.scrollTo({ top: 0, behavior: 'smooth' }) // If we are changing data we should go back to the top
+        }
 
         this.updateDisplay()
     }
@@ -1125,7 +1128,7 @@ document.addEventListener(
         inputEventTypingTimeoutId = setTimeout(() => {
             event.explicitOriginalTarget.dispatchEvent(new Event('input', { bubbles: true }))
             inputEventTypingTimeoutId = undefined
-        }, 200)
+        }, 300)
     },
     true,
 )
