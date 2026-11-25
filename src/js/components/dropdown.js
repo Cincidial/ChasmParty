@@ -12,7 +12,7 @@ class Dropdown extends HTMLElement {
     }
 
     get value() {
-        return this.list.value
+        return this.list.value.trim()
     }
 
     set value(value) {
