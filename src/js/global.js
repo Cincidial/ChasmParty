@@ -1,24 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => getServerData())
 
-let inputEventTypingTimeoutId = undefined // Delay all input typing events so the list doesn't refresh while typing (bigger lists cause lost keypresses)
-document.addEventListener(
-    'input',
-    (event) => {
-        if (!event.isTrusted || event.type !== 'input') {
-            return
-        }
-
-        event.stopImmediatePropagation()
-        clearTimeout(inputEventTypingTimeoutId)
-
-        inputEventTypingTimeoutId = setTimeout(() => {
-            event.originalTarget.dispatchEvent(new Event('input', { bubbles: true }))
-            inputEventTypingTimeoutId = undefined
-        }, 300)
-    },
-    true,
-)
-
 let sprite_atlas_img
 let sprite_atlas_data = {}
 let rx_data = {}

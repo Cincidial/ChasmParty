@@ -20,10 +20,9 @@ class SortOption {
 
 // This is the target set of data that the filter will be used on
 class TargetData {
-    constructor(dex_page, option_id, id_func, table, data) {
+    constructor(dex_page, option_id, table, data) {
         this.option_id = option_id
         this.option_element = dex_page.getElementById(this.option_id)
-        this.id_func = id_func
         this.table = table
         this.data = data
 
@@ -62,68 +61,69 @@ class DexPage extends HTMLElement {
             new TargetData(
                 this,
                 'filter_show_pokemon',
-                (x) => x._ID,
-                new Table().setup([
-                    new TableColumn(
-                        'Dex #',
-                        (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
-                        (x) => x.dex_num,
-                    ),
-                    new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
-                    new TableColumn(
-                        'Type 1',
-                        (x) => x.type1.img_icon,
-                        (x) => x.type1._ID,
-                    ),
-                    new TableColumn(
-                        'Type 2',
-                        (x) => x.type2?.img_icon ?? '',
-                        (x) => x.type2?._ID ?? '_',
-                    ),
-                    new TableColumn('Abilities', (x) => new VerticalStack().setup(x.abilities.map((y) => y.capsule_element))),
-                    new TableColumn('Tribes', (x) => new VerticalStack().setup(x.tribes.map((x) => x.capsule_element))),
-                    new TableColumn(
-                        'HP',
-                        (x) => x._Data.BaseStats.HP,
-                        (x) => x._Data.BaseStats.HP,
-                    ),
-                    new TableColumn(
-                        'Atk',
-                        (x) => x._Data.BaseStats.Atk,
-                        (x) => x._Data.BaseStats.Atk,
-                    ),
-                    new TableColumn(
-                        'Def',
-                        (x) => x._Data.BaseStats.Def,
-                        (x) => x._Data.BaseStats.Def,
-                    ),
-                    new TableColumn(
-                        'SpAtk',
-                        (x) => x._Data.BaseStats.SpAtk,
-                        (x) => x._Data.BaseStats.SpAtk,
-                    ),
-                    new TableColumn(
-                        'SpDef',
-                        (x) => x._Data.BaseStats.SpDef,
-                        (x) => x._Data.BaseStats.SpDef,
-                    ),
-                    new TableColumn(
-                        'Speed',
-                        (x) => x._Data.BaseStats.Spe,
-                        (x) => x._Data.BaseStats.Spe,
-                    ),
-                    new TableColumn(
-                        'BST',
-                        (x) => x.bst,
-                        (x) => x.bst,
-                    ),
-                ]),
+                new Table().setup(
+                    [
+                        new TableColumn(
+                            'Dex #',
+                            (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
+                            (x) => x.dex_num,
+                        ),
+                        new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
+                        new TableColumn(
+                            'Type 1',
+                            (x) => x.type1.img_icon,
+                            (x) => x.type1._ID,
+                        ),
+                        new TableColumn(
+                            'Type 2',
+                            (x) => x.type2?.img_icon ?? '',
+                            (x) => x.type2?._ID ?? '_',
+                        ),
+                        new TableColumn('Abilities', (x) => new VerticalStack().setup(x.abilities.map((y) => y.capsule_element))),
+                        new TableColumn('Tribes', (x) => new VerticalStack().setup(x.tribes.map((x) => x.capsule_element))),
+                        new TableColumn(
+                            'HP',
+                            (x) => x._Data.BaseStats.HP,
+                            (x) => x._Data.BaseStats.HP,
+                        ),
+                        new TableColumn(
+                            'Atk',
+                            (x) => x._Data.BaseStats.Atk,
+                            (x) => x._Data.BaseStats.Atk,
+                        ),
+                        new TableColumn(
+                            'Def',
+                            (x) => x._Data.BaseStats.Def,
+                            (x) => x._Data.BaseStats.Def,
+                        ),
+                        new TableColumn(
+                            'SpAtk',
+                            (x) => x._Data.BaseStats.SpAtk,
+                            (x) => x._Data.BaseStats.SpAtk,
+                        ),
+                        new TableColumn(
+                            'SpDef',
+                            (x) => x._Data.BaseStats.SpDef,
+                            (x) => x._Data.BaseStats.SpDef,
+                        ),
+                        new TableColumn(
+                            'Speed',
+                            (x) => x._Data.BaseStats.Spe,
+                            (x) => x._Data.BaseStats.Spe,
+                        ),
+                        new TableColumn(
+                            'BST',
+                            (x) => x.bst,
+                            (x) => x.bst,
+                        ),
+                    ],
+                    100,
+                ),
                 Object.values(pbs_data.pokemon),
             ),
             new TargetData(
                 this,
                 'filter_show_abilities',
-                (x) => x._ID,
                 new Table().setup(
                     [
                         new TableColumn(
@@ -134,6 +134,7 @@ class DexPage extends HTMLElement {
                         new TableColumn('Description', (x) => x._Data.Description),
                         new TableColumn('Is Primeval', (x) => isPrimevalTextDisplay(x._Data.IsPrimeval)),
                     ],
+                    100,
                     (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.abilities),
@@ -141,7 +142,6 @@ class DexPage extends HTMLElement {
             new TargetData(
                 this,
                 'filter_show_moves',
-                (x) => x._ID,
                 new Table().setup(
                     [
                         new TableColumn(
@@ -196,6 +196,7 @@ class DexPage extends HTMLElement {
                         ),
                         new TableColumn('Description', (x) => x._Data.Description ?? ''),
                     ],
+                    100,
                     (x) => this.addFilter(FilterConfig.MoveNameFilter(x._Data.Name), this.target_data_list[0]),
                 ),
                 Object.values(pbs_data.moves),
@@ -237,7 +238,6 @@ class DexPage extends HTMLElement {
 
                     return true
                 }),
-                this.current_target_data.id_func,
             ),
         )
 

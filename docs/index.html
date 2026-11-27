@@ -57,14 +57,21 @@
 
 <template id="party-table-template">
     <style>
-        table {
+        .scroll {
             border: 1px solid #e8eadd;
+            padding-right: 10px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 95vw;
             max-width: 95vw;
         }
 
         th {
             position: sticky;
             top: 0;
+            z-index: 2;
             min-width: 75px;
             padding: 2px 7px;
             font-size: 18px;
@@ -85,11 +92,11 @@
             background-color: #e8eadd;
         }
 
-        tbody tr:nth-child(odd) {
+        .tr_odd {
             background-color: #7d9198;
         }
 
-        tbody tr:nth-child(even) {
+        .tr_even {
             background-color: #4d5d69;
         }
 
@@ -113,10 +120,14 @@
         }
     </style>
 
-    <table id="table">
-        <thead id="thead"></thead>
-        <tbody id="tbody"></tbody>
-    </table>
+    <div id="table_scroll" class="scroll">
+        <div id="table_space">
+            <table id="table">
+                <thead id="thead"></thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+    </div>
 </template>
 
 <template id="party-filter-form-pokemon-template">
@@ -280,7 +291,7 @@
         }
     </style>
     <h1 style="text-align: center">Pokédex</h1>
-    <div style="display: flex; flex-direction: row; overflow: scroll">
+    <div style="display: flex; flex-direction: row">
         <div class="card default-dark-accent1">
             <div style="margin-bottom: 5px">
                 <span id="add_filter_button" class="button" style="margin-right: 10px">Add Filter</span>
