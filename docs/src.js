@@ -97,10 +97,10 @@ customElements.define('party-checkbox', Checkbox)
 class LoadingSplash extends HTMLElement {
     constructor() {
         super()
-        setupElement(this, "party-loading-splash-template")
+        setupElement(this, 'party-loading-splash-template')
     }
 }
-customElements.define("party-loading-splash", LoadingSplash)
+customElements.define('party-loading-splash', LoadingSplash)
 
 class RadioGroup extends HTMLElement {
     constructor() {
@@ -1209,7 +1209,7 @@ let local_data = {
 }
 
 async function getServerData() {
-    const loadingSplash = document.getElementById('loadingSplash')
+    const loading_splash = document.getElementById('loading_splash')
 
     function convertPbsDataListToHash(data) {
         return Object.fromEntries(data.map((x) => [x._ID, x]))
@@ -1258,7 +1258,7 @@ async function getServerData() {
         await handleData()
         sprite_atlas_data = await sliceAtlasInBatches(server_data.Atlas.SpriteAtlas)
 
-        loadingSplash.remove()
+        loading_splash.remove()
         document.body.appendChild(new DexPage())
     } catch (error) {
         console.log(`Data load error: ${error}`)
