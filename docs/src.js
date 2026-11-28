@@ -275,52 +275,66 @@ class AtlasImg extends HTMLElement {
 }
 customElements.define('party-atlas-img', AtlasImg)
 
-function getAtlasImg(x, y, w, h, atlas_img, filename, scale = 1.0, tooltip = '') {
+function getAtlasImg(img_data, scale = 1.0, tooltip = '') {
     const element = new AtlasImg()
     const img = element.getElementById('img')
-    const sizeX = (atlas_img.naturalWidth / w) * 100
-    const sizeY = (atlas_img.naturalHeight / h) * 100
-    const posX = atlas_img.naturalWidth === w ? 0 : (x / (atlas_img.naturalWidth - w)) * 100
-    const posY = atlas_img.naturalHeight === h ? 0 : (y / (atlas_img.naturalHeight - h)) * 100
 
-    img.style = `width: ${w * scale}px; height: ${h * scale}px; background-image: url('${filename}');`
-    img.style.backgroundSize = `${sizeX}% ${sizeY}%`
-    img.style.backgroundPosition = `${posX}% ${posY}%`
+    img.width = Math.ceil(img_data.w * scale)
+    img.height = Math.ceil(img_data.h * scale)
     img.title = tooltip
+
+    const ctx = img.getContext('2d')
+    ctx.scale(scale, scale)
+    ctx.drawImage(img_data.img, 0, 0)
 
     return element
 }
 
-function getTypeIcon(id, scale = 0.25) {
-    const w = sprite_atlas_data.Type.w
-    const h = sprite_atlas_data.Type.h
-    const data = sprite_atlas_data.Type[id]
-
-    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, scale, pbs_data.types[id]._Data.Name)
+function getTypeIcon(id, scale = 0.35) {
+    return getAtlasImg(sprite_atlas_data[`Type_${id}`], scale, pbs_data.types[id]._Data.Name)
 }
 
 function getCategoryIcon(id, scale = 1.0) {
-    const w = sprite_atlas_data.MoveCategory.w
-    const h = sprite_atlas_data.MoveCategory.h
-    const data = sprite_atlas_data.MoveCategory[id]
-
-    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, scale, id)
+    return getAtlasImg(sprite_atlas_data[`MoveCategory_${id}`], scale, id)
 }
 
 function getPokemonIconImg(id) {
-    const w = sprite_atlas_data.Icon.w
-    const h = sprite_atlas_data.Icon.h
-    const data = sprite_atlas_data.Icon[id] ?? sprite_atlas_data.Icon['000']
-
-    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, 1.0, pbs_data.pokemon[id]._Data.Name)
+    return getAtlasImg(sprite_atlas_data[`Icon_${id ?? '000'}`], 1.0, pbs_data.pokemon[id]._Data.Name)
 }
 
 function getPokemonFrontImg(id) {
-    const w = sprite_atlas_data.Front.w
-    const h = sprite_atlas_data.Front.h
-    const data = sprite_atlas_data.Front[id] ?? sprite_atlas_data.Front['000']
+    return getAtlasImg(sprite_atlas_data[`Front_${id ?? '000'}`], 1.0, pbs_data.pokemon[id]._Data.Name)
+}
 
-    return getAtlasImg(data.x, data.y, w, h, sprite_atlas_img, sprite_atlas_data.Artifact, 1.0, pbs_data.pokemon[id]._Data.Name)
+async function sliceAtlasInBatches(atlas_meta_data, batch_size = 100) {
+    const response = await fetch(atlas_meta_data.Artifact)
+    const blob = await response.blob()
+    const atlas_bitmap = await createImageBitmap(blob)
+
+    const result = {}
+    Object.entries(atlas_meta_data).forEach(([k1, v1]) => {
+        if (k1 != 'Artifact') {
+            Object.entries(v1).forEach(([k2, v2]) => {
+                if (k2 != 'w' && k2 != 'h') {
+                    result[`${k1}_${k2}`] = {
+                        x: v2.x,
+                        y: v2.y,
+                        w: v1.w,
+                        h: v1.h,
+                    }
+                }
+            })
+        }
+    })
+
+    const result_list = Object.values(result)
+    for (let i = 0; i < result_list.length; i += batch_size) {
+        const batch = result_list.slice(i, i + batch_size)
+        await Promise.all(batch.map(async (sprite) => (sprite.img = await createImageBitmap(atlas_bitmap, sprite.x, sprite.y, sprite.w, sprite.h))))
+    }
+
+    atlas_bitmap.close()
+    return result
 }
 
 class TableColumn {
@@ -556,7 +570,7 @@ class DexPage extends HTMLElement {
                             (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
                             (x) => x.dex_num,
                         ),
-                        new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
+                        new TableColumn('', (x) => x.img_icon),
                         new TableColumn(
                             'Type 1',
                             (x) => x.type1.img_icon,
@@ -1157,7 +1171,6 @@ class FilterConfig {
 
 document.addEventListener('DOMContentLoaded', () => getServerData())
 
-let sprite_atlas_img
 let sprite_atlas_data = {}
 let rx_data = {}
 let pbs_data = {}
@@ -1202,11 +1215,11 @@ async function getServerData() {
         return Object.fromEntries(data.map((x) => [x._ID, x]))
     }
 
+    let server_data = undefined
     async function handleData() {
         const response = await fetch('data.json')
-        const server_data = await response.json()
 
-        sprite_atlas_data = server_data.Atlas.SpriteAtlas
+        server_data = await response.json()
         rx_data = server_data.RxData
 
         // Build all the PBS data classes
@@ -1242,23 +1255,13 @@ async function getServerData() {
     }
 
     try {
-        const data_promise = handleData()
+        await handleData()
+        sprite_atlas_data = await sliceAtlasInBatches(server_data.Atlas.SpriteAtlas)
 
-        sprite_atlas_img = new Image()
-        const sprite_atlas_promise = new Promise((resolve, reject) => {
-            sprite_atlas_img.onload = resolve()
-            sprite_atlas_img.onerror = reject(new Error(`Failed to load sprite atlas`))
-            sprite_atlas_img.src = 'sprite_atlas.png'
-        })
-
-        Promise.all([data_promise, sprite_atlas_promise])
-            .then(() => {
-                loadingSplash.remove()
-                document.body.appendChild(new DexPage())
-            })
-            .catch((err) => console.log(`Data load error: ${err}`))
+        loadingSplash.remove()
+        document.body.appendChild(new DexPage())
     } catch (error) {
-        console.error(error.message)
+        console.log(`Data load error: ${error}`)
     }
 }
 

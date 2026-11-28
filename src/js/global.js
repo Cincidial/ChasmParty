@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => getServerData())
 
-let sprite_atlas_img
 let sprite_atlas_data = {}
 let rx_data = {}
 let pbs_data = {}
@@ -45,11 +44,11 @@ async function getServerData() {
         return Object.fromEntries(data.map((x) => [x._ID, x]))
     }
 
+    let server_data = undefined
     async function handleData() {
         const response = await fetch('data.json')
-        const server_data = await response.json()
 
-        sprite_atlas_data = server_data.Atlas.SpriteAtlas
+        server_data = await response.json()
         rx_data = server_data.RxData
 
         // Build all the PBS data classes
@@ -85,23 +84,13 @@ async function getServerData() {
     }
 
     try {
-        const data_promise = handleData()
+        await handleData()
+        sprite_atlas_data = await sliceAtlasInBatches(server_data.Atlas.SpriteAtlas)
 
-        sprite_atlas_img = new Image()
-        const sprite_atlas_promise = new Promise((resolve, reject) => {
-            sprite_atlas_img.onload = resolve()
-            sprite_atlas_img.onerror = reject(new Error(`Failed to load sprite atlas`))
-            sprite_atlas_img.src = 'sprite_atlas.png'
-        })
-
-        Promise.all([data_promise, sprite_atlas_promise])
-            .then(() => {
-                loadingSplash.remove()
-                document.body.appendChild(new DexPage())
-            })
-            .catch((err) => console.log(`Data load error: ${err}`))
+        loadingSplash.remove()
+        document.body.appendChild(new DexPage())
     } catch (error) {
-        console.error(error.message)
+        console.log(`Data load error: ${error}`)
     }
 }
 

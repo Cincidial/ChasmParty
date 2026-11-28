@@ -68,7 +68,7 @@ class DexPage extends HTMLElement {
                             (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
                             (x) => x.dex_num,
                         ),
-                        new TableColumn('', (x) => x.img_icon), // Add the name here and make it sort by name
+                        new TableColumn('', (x) => x.img_icon),
                         new TableColumn(
                             'Type 1',
                             (x) => x.type1.img_icon,
