@@ -1,16 +1,20 @@
 class TableColumn {
-    constructor(header_name, element_func, sort_value_func = null) {
+    constructor(header_name, width_percentage, element_func) {
         this.header_name = header_name
+        this.width_percentage = width_percentage
+        this.sort_value_func = null
         this.element_func = element_func
-        this.sort_value_func = sort_value_func
         this.th = null
     }
-}
 
-class TableRow {
-    constructor(data, tr) {
-        this.data = data
-        this.tr = tr
+    sameSortAsElement() {
+        this.sort_value_func = this.element_func
+        return this
+    }
+
+    setSortValueFunc(sort_value_func) {
+        this.sort_value_func = sort_value_func
+        return this
     }
 }
 
@@ -63,6 +67,7 @@ class Table extends HTMLElement {
             ...table_column_list.map((col) => {
                 const th = document.createElement('th')
                 th.textContent = col.header_name
+                th.style.width = `${col.width_percentage}%`
 
                 if (col.sort_value_func) {
                     if (!this.sort_col) {

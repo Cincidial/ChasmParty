@@ -338,18 +338,22 @@ async function sliceAtlasInBatches(atlas_meta_data, batch_size = 100) {
 }
 
 class TableColumn {
-    constructor(header_name, element_func, sort_value_func = null) {
+    constructor(header_name, width_percentage, element_func) {
         this.header_name = header_name
+        this.width_percentage = width_percentage
+        this.sort_value_func = null
         this.element_func = element_func
-        this.sort_value_func = sort_value_func
         this.th = null
     }
-}
 
-class TableRow {
-    constructor(data, tr) {
-        this.data = data
-        this.tr = tr
+    sameSortAsElement() {
+        this.sort_value_func = this.element_func
+        return this
+    }
+
+    setSortValueFunc(sort_value_func) {
+        this.sort_value_func = sort_value_func
+        return this
     }
 }
 
@@ -402,6 +406,7 @@ class Table extends HTMLElement {
             ...table_column_list.map((col) => {
                 const th = document.createElement('th')
                 th.textContent = col.header_name
+                th.style.width = `${col.width_percentage}%`
 
                 if (col.sort_value_func) {
                     if (!this.sort_col) {
@@ -565,59 +570,19 @@ class DexPage extends HTMLElement {
                 'filter_show_pokemon',
                 new Table().setup(
                     [
-                        new TableColumn(
-                            'Dex #',
-                            (x) => new VerticalStack().setup([x.dex_num, x._Data.Name]),
-                            (x) => x.dex_num,
-                        ),
-                        new TableColumn('', (x) => x.img_icon),
-                        new TableColumn(
-                            'Type 1',
-                            (x) => x.type1.img_icon,
-                            (x) => x.type1._ID,
-                        ),
-                        new TableColumn(
-                            'Type 2',
-                            (x) => x.type2?.img_icon ?? '',
-                            (x) => x.type2?._ID ?? '_',
-                        ),
-                        new TableColumn('Abilities', (x) => new VerticalStack().setup(x.abilities.map((y) => y.capsule_element))),
-                        new TableColumn('Tribes', (x) => new VerticalStack().setup(x.tribes.map((x) => x.capsule_element))),
-                        new TableColumn(
-                            'HP',
-                            (x) => x._Data.BaseStats.HP,
-                            (x) => x._Data.BaseStats.HP,
-                        ),
-                        new TableColumn(
-                            'Atk',
-                            (x) => x._Data.BaseStats.Atk,
-                            (x) => x._Data.BaseStats.Atk,
-                        ),
-                        new TableColumn(
-                            'Def',
-                            (x) => x._Data.BaseStats.Def,
-                            (x) => x._Data.BaseStats.Def,
-                        ),
-                        new TableColumn(
-                            'SpAtk',
-                            (x) => x._Data.BaseStats.SpAtk,
-                            (x) => x._Data.BaseStats.SpAtk,
-                        ),
-                        new TableColumn(
-                            'SpDef',
-                            (x) => x._Data.BaseStats.SpDef,
-                            (x) => x._Data.BaseStats.SpDef,
-                        ),
-                        new TableColumn(
-                            'Speed',
-                            (x) => x._Data.BaseStats.Spe,
-                            (x) => x._Data.BaseStats.Spe,
-                        ),
-                        new TableColumn(
-                            'BST',
-                            (x) => x.bst,
-                            (x) => x.bst,
-                        ),
+                        new TableColumn('Dex #', 16, (x) => new VerticalStack().setup([x.dex_num, x._Data.Name])).setSortValueFunc((x) => x.dex_num),
+                        new TableColumn('', 10, (x) => x.img_icon),
+                        new TableColumn('Type 1', 5, (x) => x.type1.img_icon).setSortValueFunc((x) => x.type1._ID),
+                        new TableColumn('Type 2', 5, (x) => x.type2?.img_icon ?? '').setSortValueFunc((x) => x.type2?._ID ?? '_'),
+                        new TableColumn('Abilities', 15, (x) => new VerticalStack().setup(x.abilities.map((y) => y.capsule_element))),
+                        new TableColumn('Tribes', 15, (x) => new VerticalStack().setup(x.tribes.map((x) => x.capsule_element))),
+                        new TableColumn('HP', 9, (x) => x._Data.BaseStats.HP).sameSortAsElement(),
+                        new TableColumn('Atk', 9, (x) => x._Data.BaseStats.Atk).sameSortAsElement(),
+                        new TableColumn('Def', 9, (x) => x._Data.BaseStats.Def).sameSortAsElement(),
+                        new TableColumn('SpAtk', 9, (x) => x._Data.BaseStats.SpAtk).sameSortAsElement(),
+                        new TableColumn('SpDef', 9, (x) => x._Data.BaseStats.SpDef).sameSortAsElement(),
+                        new TableColumn('Speed', 9, (x) => x._Data.BaseStats.Spe).sameSortAsElement(),
+                        new TableColumn('BST', 10, (x) => x.bst).sameSortAsElement(),
                     ],
                     100,
                 ),
@@ -628,13 +593,9 @@ class DexPage extends HTMLElement {
                 'filter_show_abilities',
                 new Table().setup(
                     [
-                        new TableColumn(
-                            'Name',
-                            (x) => x._Data.Name,
-                            (x) => x._Data.Name,
-                        ),
-                        new TableColumn('Description', (x) => x._Data.Description),
-                        new TableColumn('Is Primeval', (x) => isPrimevalTextDisplay(x._Data.IsPrimeval)),
+                        new TableColumn('Name', 15, (x) => x._Data.Name).sameSortAsElement(),
+                        new TableColumn('Description', 75, (x) => x._Data.Description),
+                        new TableColumn('Is Primeval', 10, (x) => isPrimevalTextDisplay(x._Data.IsPrimeval)),
                     ],
                     100,
                     (x) => this.addFilter(FilterConfig.AbilityNameFilter(x._Data.Name), this.target_data_list[0]),
@@ -646,57 +607,17 @@ class DexPage extends HTMLElement {
                 'filter_show_moves',
                 new Table().setup(
                     [
-                        new TableColumn(
-                            'Name',
-                            (x) => x._Data.Name ?? '',
-                            (x) => x._Data.Name ?? '',
-                        ),
-                        new TableColumn(
-                            'Type',
-                            (x) => x.type.img_icon ?? '',
-                            (x) => x._Data.Type ?? '',
-                        ),
-                        new TableColumn(
-                            'Category',
-                            (x) => x.category_icon ?? '',
-                            (x) => x._Data.Category ?? '',
-                        ),
-                        new TableColumn(
-                            'Pow',
-                            (x) => x._Data.Power ?? '',
-                            (x) => x._Data.Power ?? '',
-                        ),
-                        new TableColumn(
-                            'Acc',
-                            (x) => x._Data.Accuracy ?? '',
-                            (x) => x._Data.Accuracy ?? '',
-                        ),
-                        new TableColumn(
-                            'PP',
-                            (x) => x._Data.TotalPP ?? '',
-                            (x) => x._Data.TotalPP ?? '',
-                        ),
-                        new TableColumn(
-                            'Prio',
-                            (x) => (x._Data.Priority == undefined || x._Data.Priority == 0 ? '' : x._Data.Priority),
-                            (x) => (x._Data.Priority == undefined || x._Data.Priority == 0 ? '' : x._Data.Priority),
-                        ),
-                        new TableColumn(
-                            'Flags',
-                            (x) => x._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? '',
-                            (x) => x._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? '',
-                        ),
-                        new TableColumn(
-                            '%',
-                            (x) => (x._Data.EffectChance == undefined || x._Data.EffectChance == 100 ? '' : x._Data.EffectChance),
-                            (x) => (x._Data.EffectChance == undefined || x._Data.EffectChance == 100 ? '' : x._Data.EffectChance),
-                        ),
-                        new TableColumn(
-                            'Primeval',
-                            (x) => isPrimevalTextDisplay(x._Data.IsPrimeval),
-                            (x) => isPrimevalTextDisplay(x._Data.IsPrimeval),
-                        ),
-                        new TableColumn('Description', (x) => x._Data.Description ?? ''),
+                        new TableColumn('Name', 10, (x) => x._Data.Name ?? '').sameSortAsElement(),
+                        new TableColumn('Type', 5, (x) => x.type.img_icon ?? '').setSortValueFunc((x) => x._Data.Type ?? ''),
+                        new TableColumn('Category', 5, (x) => x.category_icon ?? '').setSortValueFunc((x) => x._Data.Category ?? ''),
+                        new TableColumn('Pow', 5, (x) => x._Data.Power ?? '').sameSortAsElement(),
+                        new TableColumn('Acc', 5, (x) => x._Data.Accuracy ?? '').sameSortAsElement(),
+                        new TableColumn('PP', 3, (x) => x._Data.TotalPP ?? '').sameSortAsElement(),
+                        new TableColumn('Prio', 5, (x) => (!x?._Data.Priority ? '' : x._Data.Priority)).sameSortAsElement(),
+                        new TableColumn('Flags', 10, (x) => x.display_flags).sameSortAsElement(),
+                        new TableColumn('%', 5, (x) => ((x._Data.EffectChance ?? 100) == 100 ? '' : x._Data.EffectChance)).sameSortAsElement(),
+                        new TableColumn('Primeval', 7, (x) => isPrimevalTextDisplay(x._Data.IsPrimeval)).sameSortAsElement(),
+                        new TableColumn('Description', 40, (x) => x._Data.Description ?? ''),
                     ],
                     100,
                     (x) => this.addFilter(FilterConfig.MoveNameFilter(x._Data.Name), this.target_data_list[0]),
@@ -992,6 +913,7 @@ class PbsMove {
         setPbsBaseMembers(this, k, v)
 
         this.type = pbs_data.types[this._Data.Type]
+        this.display_flags = this._Data.Flags?.filter((x) => !local_data.ignored_move_flags.includes(x))?.join(', ') ?? ''
     }
 
     get category_icon() {
